@@ -113,8 +113,11 @@ def _execute(command: list[str], cwd: Path, environment: dict[str, str] | None =
 def runtime_environment(prefix: Path) -> dict[str, str]:
     environment = os.environ.copy()
     library = str((prefix / "lib").resolve())
+    preload = str((prefix / "lib" / "libsqlite3.so.0").resolve())
     existing = environment.get("LD_LIBRARY_PATH")
+    existing_preload = environment.get("LD_PRELOAD")
     environment["LD_LIBRARY_PATH"] = library if not existing else f"{library}:{existing}"
+    environment["LD_PRELOAD"] = preload if not existing_preload else f"{preload}:{existing_preload}"
     return environment
 
 

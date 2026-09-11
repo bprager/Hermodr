@@ -14,7 +14,7 @@ SQLite's current [WAL documentation](https://www.sqlite.org/wal.html) identifies
 
 Use Python's standard `sqlite3` driver, but do not activate production WAL processing with the installed SQLite 3.46.1 library. Supply SQLite 3.53.4 as a private shared library built from the checksum-pinned official archive. Production startup accepts only the exact allowlisted version and upstream source ID; a different later version requires review and a new allowlist entry.
 
-Select the private library through the service environment before Python starts. Do not replace the operating-system library or rely on a process-wide library-path change after `_sqlite3` has loaded. Build and verification details are recorded in `docs/m1/SQLITE_RUNTIME.md` and `supply-chain/sqlite-runtime.json`.
+Select the exact private library through `LD_PRELOAD` and a private-first `LD_LIBRARY_PATH` before Python starts. Do not replace the operating-system library or rely on a process-wide library-path change after `_sqlite3` has loaded. Build and verification details are recorded in `docs/m1/SQLITE_RUNTIME.md` and `supply-chain/sqlite-runtime.json`.
 
 Use one local database, short transactions, `journal_mode=WAL`, `synchronous=FULL`, foreign keys, and a bounded busy timeout. Receiver, processor, and maintenance processes remain on the same host. Use Python's connection backup API for live backups.
 

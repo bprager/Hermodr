@@ -574,9 +574,13 @@ class SQLiteRuntimeSupplyTests(unittest.TestCase):
             (prefix / "lib").mkdir()
             (prefix / "lib" / "libsqlite3.so.0").write_bytes(b"synthetic")
             with patch.dict("os.environ", {}, clear=True):
-                self.assertEqual(sqlite_runtime.runtime_environment(prefix)["LD_LIBRARY_PATH"], str((prefix / "lib").resolve()))
-            with patch.dict("os.environ", {"LD_LIBRARY_PATH": "/existing"}, clear=True):
-                self.assertTrue(sqlite_runtime.runtime_environment(prefix)["LD_LIBRARY_PATH"].endswith(":/existing"))
+                environment = sqlite_runtime.runtime_environment(prefix)
+                self.assertEqual(environment["LD_LIBRARY_PATH"], str((prefix / "lib").resolve()))
+                self.assertEqual(environment["LD_PRELOAD"], str((prefix / "lib" / "libsqlite3.so.0").resolve()))
+            with patch.dict("os.environ", {"LD_LIBRARY_PATH": "/existing", "LD_PRELOAD": "/existing/library.so"}, clear=True):
+                environment = sqlite_runtime.runtime_environment(prefix)
+                self.assertTrue(environment["LD_LIBRARY_PATH"].endswith(":/existing"))
+                self.assertTrue(environment["LD_PRELOAD"].endswith(":/existing/library.so"))
             output = json.dumps(asdict(self._evidence()))
             completed = subprocess.CompletedProcess([], 0, stdout=output, stderr="")
             with patch("tools.sqlite_runtime.subprocess.run", return_value=completed):

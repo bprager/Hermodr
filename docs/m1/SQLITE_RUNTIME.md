@@ -35,7 +35,7 @@ The local target build and CI require all of these facts:
 | Migration from empty database | Successful |
 | Full application test suite | Passed using the private library |
 
-The private build uses the historical `libsqlite3.so.0` SONAME expected by the existing Python extension. The service launcher must set `LD_LIBRARY_PATH` before Python starts; changing it after importing `sqlite3` is too late. M3 systemd units will use the versioned deployment prefix and run the verifier as a startup prerequisite.
+The private build uses the historical `libsqlite3.so.0` SONAME expected by the existing Python extension. The service launcher must set both an exact `LD_PRELOAD` and a private-first `LD_LIBRARY_PATH` before Python starts. The explicit preload also works with Python distributions whose embedded runtime search path would otherwise win. Changing either value after importing `sqlite3` is too late. M3 systemd units will use the root-owned versioned deployment prefix and run the verifier as a startup prerequisite.
 
 ## Commands
 

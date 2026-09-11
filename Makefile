@@ -20,8 +20,8 @@ sqlite-runtime-check:
 	@PYTHONPATH=src:. $(PYTHON) -m tools.sqlite_runtime verify --prefix "$(SQLITE_PREFIX)"
 
 sqlite-validated-check: sqlite-runtime
-	@LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" PYTHONPATH=src:. $(PYTHON) -c 'from pathlib import Path; from hermodr.config import Configuration; from hermodr.database import assert_runtime_supported, sqlite_build_approved; c=Configuration("production", Path("unused.sqlite"), "127.0.0.1", "INFO", 1000); assert_runtime_supported(c); assert sqlite_build_approved()'
-	@LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" $(MAKE) check
+	@LD_PRELOAD="$(SQLITE_PREFIX)/lib/libsqlite3.so.0" LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" PYTHONPATH=src:. $(PYTHON) -c 'from pathlib import Path; from hermodr.config import Configuration; from hermodr.database import assert_runtime_supported, sqlite_build_approved; c=Configuration("production", Path("unused.sqlite"), "127.0.0.1", "INFO", 1000); assert_runtime_supported(c); assert sqlite_build_approved()'
+	@LD_PRELOAD="$(SQLITE_PREFIX)/lib/libsqlite3.so.0" LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" $(MAKE) check
 
 format-check:
 	@! grep -RInE '[[:blank:]]+$$' --include='*.py' --include='*.md' --include='*.json' --include='Makefile' .
