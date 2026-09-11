@@ -1,0 +1,11 @@
+{
+  "_type": "location",
+  "acc": 8,
+  "batt": 79,
+  "lat": 0.0,
+  "lon": 0.0,
+  "t": "p",
+  "tid": "S1",
+  "topic": "owntracks/synthetic-subject/synthetic-device",
+  "tst": 1893455940
+}

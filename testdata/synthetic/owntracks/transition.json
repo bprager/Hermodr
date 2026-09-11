@@ -1,0 +1,12 @@
+{
+  "_type": "transition",
+  "acc": 10,
+  "desc": "synthetic-zone",
+  "event": "enter",
+  "lat": 0.0,
+  "lon": 0.0,
+  "rid": "synthetic-region",
+  "tid": "S1",
+  "tst": 1893456001,
+  "wtst": 1893455000
+}

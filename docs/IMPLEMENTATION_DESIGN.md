@@ -13,7 +13,7 @@ Hermóðr should be implemented as one release artifact with four commands:
 - `hermodr admin`: bounded operator actions such as quarantine inspection, reprocessing, deletion, and backup verification.
 - `hermodr migrate`: explicit database migration command run before service readiness.
 
-The recommended implementation language is Go. It produces a small static service artifact, has predictable resource use, supports graceful process supervision well, and has mature HTTP, SQLite, Prometheus, and structured-logging libraries. The domain and storage boundaries below do not depend on Go, so this choice can be changed before scaffolding without changing the contracts.
+ADR 0001 selects Python 3.13 or newer for the implementation. It is already available on the application host, meets the expected I/O-bound workload, and provides HTTP, SQLite, hashing, structured-data, and testing foundations without mandatory third-party packages. The domain and storage boundaries remain language-independent.
 
 SQLite in WAL mode is the system of record. Receiver persistence, processor work claiming, normalized records, derivations, audit events, and the canonical outbox live in the same database for the MVP. This permits local atomic transactions and avoids introducing a broker. “Queue-driven” means a durable database work queue with short polling plus wake-up hints; correctness never depends on an in-memory notification.
 
@@ -51,7 +51,7 @@ The PRD is internally consistent on its main boundary: Hermóðr collects and de
 | PRD issue or ambiguity | Design treatment |
 | --- | --- |
 | Unsupported OwnTracks types may be “rejected or quarantined.” | Known unsupported types return `422`; a future type may be quarantined only when a bounded forward-compatibility policy explicitly enables it. |
-| The accepted HTTP body shape is unspecified. | Assume one object for MVP; verify array/batch behavior with the real client before freezing the API. |
+| The accepted HTTP body shape was unspecified. | ADR 0005 accepts one object, rejects arrays atomically, and ignores zero-length publishes. |
 | “Relevant transport metadata” could accidentally retain personal or secret data. | Use a strict allowlist and omit IP addresses and raw user-agent values by default. |
 | The idempotency source fields and canonicalization rules are unspecified. | Freeze canonical JSON and a keyed idempotency formula before implementation; do not equate near-duplicate coordinates with retransmission. |
 | Location, transition, waypoint, and status messages do not all fit the observation schema. | Use type-specific adapters. Only location-bearing input creates an observation; other types create their explicit canonical or diagnostic representation. |
@@ -109,11 +109,11 @@ The outbox is append-only from Hermóðr's perspective. The external Napoleon im
 
 `POST /v1/owntracks`
 
-- Required: `Content-Type: application/json` (an optional UTF-8 charset is allowed).
-- Authentication: bearer token is recommended, subject to an OwnTracks device spike. Basic authentication is the fallback.
-- Body: a single OwnTracks object for MVP. Array/batch payloads are rejected unless the client spike proves they are required, in which case each element receives its own raw event in one transaction.
-- Success: `202 Accepted` with `{"status":"accepted","ingest_id":"..."}`.
-- Exact duplicate: `200 OK` with `{"status":"duplicate","ingest_id":"..."}` referring to the original.
+- Required for non-empty bodies: `Content-Type: application/json` or `application/*+json` (an optional UTF-8 charset is allowed).
+- Authentication: HTTP Basic over TLS, with opaque credentials scoped server-side to one device and subject.
+- Body: one OwnTracks object. Arrays/batches are rejected atomically with `422`; zero-length publishes return `200 []` without persistence.
+- New durable event or exact duplicate: `200 OK` with `[]`. Correlation uses a response header containing the opaque ingest ID rather than a custom response body.
+- Zero-length body: `200 OK` with `[]`, without creating a raw event.
 - Auth failure: `401` with a generic body and `WWW-Authenticate` appropriate to the configured mode.
 - Invalid content type or encoding: `415`.
 - Too large: `413`.
@@ -122,7 +122,7 @@ The outbox is append-only from Hermóðr's perspective. The external Napoleon im
 - Storage unavailable or commit failure: `503`; the request is not acknowledged.
 - Rate limit at fenrir: `429` with bounded retry guidance.
 
-OwnTracks retry behavior must be verified during the device spike. Response status/body details can be adapted without changing persistence semantics.
+OwnTracks documents any `2xx` as successfully posted and `200 []` as the typical response. Exact non-`2xx` retry timing must be verified during real-device commissioning.
 
 Relevant transport metadata is limited to request ID, normalized route, content type, content length, selected safe user-agent family, authentication key ID (not secret), and receiver build version.
 
@@ -455,10 +455,10 @@ No production coordinates or credentials appear in fixtures. Test coordinates ar
 
 | Decision | Recommendation | When required |
 | --- | --- | --- |
-| Authentication mode | Bearer token if confirmed by OwnTracks spike; Basic otherwise | Before receiver contract freeze |
-| Single vs batch body | Single object unless captured client behavior requires array support | Receiver spike |
-| Deployment | systemd on Odin | Before packaging work |
-| SQLite driver/build | Select after crash/durability/backup API spike | Foundation milestone |
+| Authentication mode | Decided: Basic over TLS; credential maps to device and subject | ADR 0004 |
+| Single vs batch body | Decided: one object; reject arrays; ignore empty publish | ADR 0005 |
+| Deployment | Decided: systemd on Odin | ADR 0003 |
+| SQLite driver/build | Decided: Python `sqlite3`, requiring SQLite >= 3.51.3 or an exact reviewed backport | ADR 0002 and M1 startup gate |
 | Public hostname/path | Preserve `/v1/owntracks`; choose hostname operationally | Fenrir integration |
 | Retention defaults | PRD values, explicitly approved for version 1 and separately reviewed for version 2 | Each production gate |
 | Derivation thresholds | Calibrate with synthetic route, then user-approved real-device trial | Phase 2 acceptance |

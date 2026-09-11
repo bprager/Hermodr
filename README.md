@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project is currently in design and implementation planning. No production service is included yet.
+The project has completed its protocol and deployment decision spike. Production service implementation has not started.
 
 ## Architecture
 
@@ -40,6 +40,8 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [Implementation design](docs/IMPLEMENTATION_DESIGN.md)
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Maintained backlog](docs/BACKLOG.md)
+- [Architecture decisions](docs/adr/)
+- [M0 protocol findings](docs/m0/OWNTRACKS_HTTP_FINDINGS.md)
 - [Changelog](CHANGELOG.md)
 
 Detailed product documentation is access-controlled project material. Never commit real coordinates, credentials, device identifiers, addresses, or production payloads.
@@ -55,7 +57,18 @@ hermodr admin
 hermodr migrate
 ```
 
-Implementation language and packaging are finalized during the initial decision spike.
+Python 3.13 or newer is the selected implementation runtime. Production packaging is finalized during the repository-foundation milestone.
+
+## Development
+
+The M0 protocol harness uses only the Python standard library and synthetic data:
+
+```shell
+make demo
+make check
+```
+
+`make check` runs tests, static checks, Markdown and sensitive-pattern validation, and a strict line-coverage gate that fails at 95% or below.
 
 ## Delivery sequence
 

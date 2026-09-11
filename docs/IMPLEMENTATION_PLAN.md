@@ -19,14 +19,16 @@ The plan uses these priority levels:
 
 **Goal:** remove client and host uncertainties before contract freeze.
 
+**Status:** Repository-complete on 2026-09-10. Real-device retry/header behavior and infrastructure policy approvals remain explicit commissioning gates.
+
 - P0 Capture sanitized OwnTracks HTTP behavior for location, transition, waypoint, and status messages.
 - P0 Verify supported bearer/Basic configuration, retry response behavior, content type, timestamp units, device/subject fields, and whether batching occurs.
 - P0 Inventory Odin and fenrir deployment, boot ordering, filesystem encryption, backup, persistent monitoring, time-sync, and service-account standards.
-- P0 Decide Go/SQLite driver, systemd versus Compose, and the private listener topology.
+- P0 Decide implementation language/SQLite driver, systemd versus Compose, and the private listener topology.
 - P0 Record approved public route, retention values, credential workflow, and backup target/key recovery owner.
 - P0 Create synthetic coordinate fixtures and explicitly prohibit production data in the repository.
 
-**Exit evidence:** short ADRs for the decisions above; sanitized request fixtures; successful throwaway client-to-test-endpoint exchange; approved privacy/retention checklist.
+**Exit evidence:** ADRs 0001–0005; sanitized request fixtures and capture/replay harness; successful synthetic endpoint exchange; host inventory; privacy/retention checklist with external approvals visibly pending.
 
 ### M1 — Repository and contracts foundation
 
@@ -164,21 +166,23 @@ The plan uses these priority levels:
 ## 3. Recommended Repository Layout
 
 ```text
-cmd/hermodr/                 command entry points
-internal/config/             typed config, validation, fingerprints
-internal/httpingest/         HTTP contract and middleware
-internal/auth/               credential verification and rotation
-internal/store/              SQLite repositories and transactions
-internal/owntracks/          strict source adapters
-internal/canonical/          canonical models and serialization
-internal/processor/          claims, retry, normalization orchestration
-internal/derive/             place/visit/trip/gap algorithms
-internal/outbox/             envelope and append operations
-internal/admin/              audited operator workflows
-internal/observability/      logging, metrics, health, redaction
+src/hermodr/                 production Python package
+src/hermodr/commands/        receiver, processor, admin, migrate entry points
+src/hermodr/config/          typed config, validation, fingerprints
+src/hermodr/httpingest/      HTTP contract and middleware
+src/hermodr/auth/            credential verification and rotation
+src/hermodr/store/           SQLite repositories and transactions
+src/hermodr/owntracks/       strict source adapters
+src/hermodr/canonical/       canonical models and serialization
+src/hermodr/processor/       claims, retry, normalization orchestration
+src/hermodr/derive/          place/visit/trip/gap algorithms
+src/hermodr/outbox/          envelope and append operations
+src/hermodr/admin/           audited operator workflows
+src/hermodr/observability/   logging, metrics, health, redaction
 migrations/                  ordered SQL migrations
 schemas/                     versioned JSON Schemas
 testdata/synthetic/          non-sensitive golden fixtures
+tools/owntracks_spike/       disposable M0 protocol harness
 deploy/systemd/              service units and hardening
 deploy/fenrir/               example route, no secrets
 deploy/monitoring/           dashboards, rules, scrape examples
@@ -223,10 +227,10 @@ Every story that changes behavior is complete only when:
 
 | PRD area | Primary milestones | Verification artifact |
 | --- | --- | --- |
-| Receiver RCV-001–014 | M1–M3 | API matrix, crash test, load report, privacy scan |
-| Processor PRC-001–017 | M4–M5 | golden/scenario tests, convergence and crash reports |
+| Receiver RCV-001–015 | M1–M3 | API matrix, crash test, load report, privacy scan |
+| Processor PRC-001–018 | M4–M5 | golden/scenario tests, convergence and crash reports |
 | Napoleon contract | M7 | fake importer conformance suite |
-| Security SEC-001–010 | M0–M3, M6 | threat review, permission test, audit/deletion evidence |
+| Security SEC-001–012 | M0–M3, M6 | threat review, permission test, audit/deletion evidence |
 | Reliability | M2–M3, M8 | latency/load results, restart and restore exercises |
 | Observability/operations | M1–M3, all later milestones | metric contract, dashboard, alert tests, runbooks |
 | Deployment | M0, M3 | hardened unit/config review and rollback rehearsal |
@@ -237,8 +241,8 @@ Every story that changes behavior is complete only when:
 
 The first engineering iteration should contain only work that reduces foundational risk:
 
-1. Capture sanitized OwnTracks requests and retries against a disposable local endpoint.
-2. Write ADRs for language, SQLite driver, authentication, deployment, and body shape.
+1. Use the completed M0 synthetic capture/replay matrix to validate real-device behavior during commissioning.
+2. Apply ADRs 0001–0005 for language, patched SQLite, authentication, deployment, and body shape.
 3. Freeze canonical time/ID/hash/error conventions and metric-label policy.
 4. Create the initial schema and migration test harness.
 5. Implement the observability facade with allowlisted fields and sensitive canary tests.

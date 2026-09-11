@@ -1,0 +1,9 @@
+{
+  "_type": "waypoint",
+  "desc": "synthetic-zone",
+  "lat": 0.0,
+  "lon": 0.0,
+  "rad": 100,
+  "rid": "synthetic-region",
+  "tst": 1893455000
+}

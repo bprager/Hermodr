@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- Synthetic OwnTracks HTTP capture/replay harness covering supported message types, duplicates, ordering, body shapes, content types, empty publishes, and transient retry responses.
+- Standard-library test suite and CI with a strict greater-than-95-percent line coverage gate.
+- ADRs selecting Python, guarded SQLite, systemd, Basic-over-TLS authentication, and a single-object HTTP contract.
+- M0 protocol findings, privacy checklist, and redacted deployment inventory.
 - Initial product requirements for authenticated, local-first location ingestion and deterministic processing.
 - Implementation design covering receiver, processor, durable SQLite queue, canonical outbox, privacy, security, deployment, and testing.
 - Milestone-based implementation plan with acceptance traceability.
@@ -19,11 +23,15 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Completed the repository-executable M0 decision spike and recorded remaining hardware and policy checks as explicit production gates.
+- Changed the provisional success response to OwnTracks-compatible `200 []` and documented zero-length publish handling.
+- Replaced the initial Go recommendation with Python 3.13 based on host evidence.
 - Made the version 1 credential, schema, processing, policy, audit, and deletion design multi-subject-ready.
 - Replaced subject-identifying metric dimensions with aggregate state and worst-case freshness signals plus restricted diagnostics.
 - Expanded production acceptance to include full-path reboot and monitoring-continuity drills.
 
 ### Security
 
+- Blocked production SQLite WAL activation until the linked library is version 3.51.3 or an explicitly reviewed fixed backport.
 - Added cross-subject isolation requirements and negative tests throughout authentication, storage, derivation, outbox, export, retention, and deletion.
 - Added independent device credential revocation and separately reviewed subject policies.

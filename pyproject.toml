@@ -1,0 +1,5 @@
+[project]
+name = "hermodr"
+version = "0.0.0"
+description = "Local-first deterministic location ingestion service"
+requires-python = ">=3.13"

@@ -16,10 +16,10 @@
 
 | ID | Release | Priority | Status | Work | Dependency | Acceptance evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| HMD-001 | V1 | P0 | Ready | Capture sanitized source-client payload and retry behavior for every supported message type. | Disposable test endpoint | Sanitized fixtures and behavior report |
-| HMD-002 | V1 | P0 | Ready | Inventory gateway and application hosts for boot ordering, storage encryption, time sync, service identities, backup, and monitoring. | Host access | Signed inventory checklist |
-| HMD-003 | V1 | P0 | Ready | Decide implementation language, SQLite driver, deployment mode, authentication mode, and request body shape. | HMD-001, HMD-002 | Accepted ADRs |
-| HMD-004 | V1 | P0 | Ready | Approve retention defaults, public route, backup destination, and recovery-key ownership. | HMD-002 | Approved policy record |
+| HMD-001 | V1 | P0 | Done | Capture sanitized source-client payload and retry behavior for every supported message type. | Disposable test endpoint | `docs/m0/OWNTRACKS_HTTP_FINDINGS.md`; synthetic harness and fixtures |
+| HMD-002 | V1 | P0 | Done | Inventory gateway and application hosts for boot ordering, storage encryption, time sync, service identities, backup, and monitoring. | Host access | `docs/m0/HOST_INVENTORY.md`; inaccessible facts explicitly listed |
+| HMD-003 | V1 | P0 | Done | Decide implementation language, SQLite driver, deployment mode, authentication mode, and request body shape. | HMD-001, HMD-002 | ADRs 0001–0005 |
+| HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | `docs/m0/PRIVACY_RETENTION_CHECKLIST.md`; three approvals pending |
 | HMD-005 | V1 | P0 | Ready | Scaffold receiver, processor, admin, and migration commands. | HMD-003 | CI build and startup tests |
 | HMD-006 | V1 | P0 | Ready | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject unit tests |
 | HMD-007 | V1 | P0 | Ready | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | Golden contract suite |

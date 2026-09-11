@@ -148,7 +148,7 @@ Version 2 adds Quinn as a separately registered tracked subject. Enrollment shal
 
 ### 8.2 Authentication
 
-The MVP may use a high-entropy dedicated bearer token or HTTP Basic credential over TLS, subject to OwnTracks client support. Credentials shall:
+Version 1 shall use a high-entropy dedicated HTTP Basic credential over TLS, as established by ADR 0004. Credentials shall:
 
 - Be unique to Hermóðr and used by no other service.
 - Be stored outside source control.
@@ -481,8 +481,7 @@ Version 2 is accepted when all version 1 guarantees remain satisfied and it addi
 ## 20. Open Decisions Before Production
 
 - Final public hostname and fenrir route.
-- Bearer token versus HTTP Basic authentication based on OwnTracks configuration support.
-- Docker Compose versus systemd deployment on Odin.
+- Final systemd unit hardening and service-account assignments on Odin.
 - Confirmation or adjustment of raw and normalized retention periods.
 - Initial known-place list and radii.
 - Thresholds for accuracy, visit dwell, trip segmentation, and absence-of-report alerts.

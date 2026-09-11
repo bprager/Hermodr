@@ -219,3 +219,6 @@ __marimo__/
 
 # Project documentation (overrides any user-level global ignore rule)
 !README.md
+
+# Project metadata (overrides any user-level global ignore rule)
+!pyproject.toml
