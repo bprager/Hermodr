@@ -12,7 +12,6 @@
   "configure_flags": [
     "--disable-static",
     "--disable-readline",
-    "--disable-load-extension",
     "--soname=legacy"
   ],
   "license": "public-domain",

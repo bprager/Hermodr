@@ -31,7 +31,6 @@ COMPILE_FLAGS = (
 CONFIGURE_FLAGS = (
     "--disable-static",
     "--disable-readline",
-    "--disable-load-extension",
     "--soname=legacy",
 )
 
@@ -48,7 +47,8 @@ class RuntimeEvidence:
     json_available: bool
     trusted_schema_default_off: bool
     secure_delete_default_on: bool
-    load_extension_omitted: bool
+    load_extension_available: bool
+    load_extension_default_off: bool
 
 
 def archive_digest(path: Path) -> str:
@@ -128,6 +128,11 @@ def verify_runtime(prefix: Path, python: str = sys.executable) -> RuntimeEvidenc
     probe = """import json, sqlite3
 c = sqlite3.connect(':memory:')
 options = {row[0] for row in c.execute('PRAGMA compile_options')}
+try:
+  c.execute("SELECT load_extension('')").fetchone()
+  extension_default_off = False
+except sqlite3.OperationalError as error:
+  extension_default_off = str(error) == 'not authorized'
 print(json.dumps({
   'version': sqlite3.sqlite_version,
   'source_id': c.execute('SELECT sqlite_source_id()').fetchone()[0],
@@ -135,7 +140,8 @@ print(json.dumps({
   'json_available': bool(c.execute("SELECT json_valid('[]')").fetchone()[0]),
   'trusted_schema_default_off': not bool(c.execute('PRAGMA trusted_schema').fetchone()[0]),
   'secure_delete_default_on': bool(c.execute('PRAGMA secure_delete').fetchone()[0]),
-  'load_extension_omitted': 'OMIT_LOAD_EXTENSION' in options,
+  'load_extension_available': 'OMIT_LOAD_EXTENSION' not in options,
+  'load_extension_default_off': extension_default_off,
 }, sort_keys=True))
 """
     try:
@@ -151,7 +157,7 @@ print(json.dumps({
         raise RuntimeSupplyError("sqlite_runtime_probe_failed") from exc
     if evidence.version != SQLITE_VERSION or evidence.source_id != SQLITE_SOURCE_ID:
         raise RuntimeSupplyError("sqlite_runtime_identity_mismatch")
-    if not all((evidence.threadsafety > 0, evidence.json_available, evidence.trusted_schema_default_off, evidence.secure_delete_default_on, evidence.load_extension_omitted)):
+    if not all((evidence.threadsafety > 0, evidence.json_available, evidence.trusted_schema_default_off, evidence.secure_delete_default_on, evidence.load_extension_available, evidence.load_extension_default_off)):
         raise RuntimeSupplyError("sqlite_runtime_capability_mismatch")
     return evidence
 

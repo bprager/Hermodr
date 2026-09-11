@@ -498,7 +498,8 @@ class SQLiteRuntimeSupplyTests(unittest.TestCase):
             "json_available": True,
             "trusted_schema_default_off": True,
             "secure_delete_default_on": True,
-            "load_extension_omitted": True,
+            "load_extension_available": True,
+            "load_extension_default_off": True,
         }
         values.update(changes)
         return sqlite_runtime.RuntimeEvidence(**values)

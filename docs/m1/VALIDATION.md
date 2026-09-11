@@ -26,7 +26,7 @@ make sqlite-validated-check
 
 The gate performs whitespace and syntax checks, byte-compilation, AST-based unsafe-code and undeclared-external-import analysis, zero-runtime-dependency/license-policy verification, reproducible artifact construction, unit/integration/contract/privacy tests, aggregate line coverage, Markdown checks, sensitive-pattern scanning, and Git diff validation.
 
-The final release-candidate run passed 41 tests and measured **100.00% line coverage (1854/1854 executable lines)**. The gate fails at 95% or below and measures all handwritten Python runtime, build-backend, harness, SQLite supply, static-analysis, and test code.
+The final release-candidate run passed 41 tests and measured **100.00% line coverage (1856/1856 executable lines)**. The gate fails at 95% or below and measures all handwritten Python runtime, build-backend, harness, SQLite supply, static-analysis, and test code.
 
 `make sqlite-validated-check` additionally checksum-builds and probes the approved SQLite 3.53.4 private library, confirms production startup accepts its exact source identity, and reruns the complete suite with Python dynamically linked to that library. The local release-candidate run passed both the system-library negative-gate suite and the approved-runtime suite.
 
