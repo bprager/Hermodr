@@ -17,7 +17,7 @@ groups:
         labels: {severity: critical}
         annotations: {summary: "Hermodr durable metrics are unavailable"}
       - alert: HermodrDurableIngestUnavailable
-        expr: up{job="odin-textfile"} != 1 or hermodr_database_integrity_status != 1
+        expr: absent(hermodr_receiver_ready) or hermodr_receiver_ready != 1 or hermodr_database_integrity_status != 1
         for: 2m
         labels: {severity: critical}
         annotations: {summary: "Hermodr durable ingest is unavailable"}
@@ -26,6 +26,11 @@ groups:
         for: 5m
         labels: {severity: critical}
         annotations: {summary: "Hermodr is returning server errors"}
+      - alert: HermodrDatabaseErrors
+        expr: increase(hermodr_storage_operations_total{result="failed"}[5m]) > 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr reported a database operation failure"}
       - alert: HermodrIngestLatency
         expr: hermodr:ingest_latency_p95_seconds:5m > 0.5
         for: 10m

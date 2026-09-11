@@ -13,6 +13,7 @@ from .config import ConfigurationError, load_configuration
 from .database import DatabaseError, connect, migrate, schema_version
 from .metrics import reconstruct_critical_metrics
 from .backup import BackupError, create_backup, verify_backup
+from .audit import ANNOTATION_ACTIONS, AuditError, record_change
 from .clock import SystemClock, unix_milliseconds
 from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
@@ -28,9 +29,13 @@ def parser() -> argparse.ArgumentParser:
     processor.add_argument("--check", action="store_true")
     processor.add_argument("--interval-seconds", type=float, default=30)
     admin = commands.add_parser("admin")
-    admin.add_argument("action", choices=("build-info", "metrics", "backup-create", "backup-verify", "restore-test"))
+    admin.add_argument("action", choices=("build-info", "metrics", "audit-change", "backup-create", "backup-verify", "restore-test"))
     admin.add_argument("--archive", type=Path)
     admin.add_argument("--passphrase-file", type=Path)
+    admin.add_argument("--audit-action", choices=sorted(ANNOTATION_ACTIONS))
+    admin.add_argument("--target-id")
+    admin.add_argument("--reason-code")
+    admin.add_argument("--run-id")
     migration = commands.add_parser("migrate")
     migration.add_argument("action", choices=("up", "status"))
     return root
@@ -79,6 +84,14 @@ def run(arguments: list[str] | None = None) -> int:
                 _safe_result(**BUILD.labels())
             elif args.command == "admin" and args.action == "metrics":
                 sys.stdout.write(reconstruct_critical_metrics(connection, unix_milliseconds(SystemClock().now())).render())
+            elif args.command == "admin" and args.action == "audit-change":
+                if None in (args.audit_action, args.target_id, args.reason_code, args.run_id):
+                    raise AuditError("audit_arguments_missing")
+                audit_id = record_change(
+                    connection, configuration, args.audit_action, args.target_id,
+                    args.reason_code, args.run_id,
+                )
+                _safe_result(action=args.audit_action, audit_id=audit_id, status="ok")
             elif args.command == "admin":
                 if args.archive is None or args.passphrase_file is None:
                     raise BackupError("backup_arguments_missing")
@@ -98,7 +111,7 @@ def run(arguments: list[str] | None = None) -> int:
         finally:
             if connection is not None:
                 connection.close()
-    except (BackupError, ConfigurationError, DatabaseError, ReceiverError) as exc:
+    except (AuditError, BackupError, ConfigurationError, DatabaseError, ReceiverError) as exc:
         _safe_result(error=str(exc), status="error")
         return 2
     except (OSError, sqlite3.Error):

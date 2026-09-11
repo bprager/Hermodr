@@ -35,11 +35,11 @@
 | HMD-011 | V1 | P0 | Done | Implement quarantine, deterministic responses, graceful drain, liveness, and storage-backed readiness. | HMD-010 | `docs/m2/VALIDATION.md`; receiver conformance suite |
 | HMD-012 | V1 | P0 | Done | Meet the durable-ingest latency and throughput targets on target storage. | HMD-010 | `docs/m2/VALIDATION.md`; synchronous-FULL load gate |
 | HMD-013 | V1 | P0 | Done | Deploy boot-enabled hardened services and the restricted HTTPS gateway route. | HMD-002, HMD-011 | `docs/m3/VALIDATION.md`; validated systemd/nginx activation |
-| HMD-014 | V1 | P0 | In Progress | Deploy persistent metric collection, dashboard, alert rules, and durable synthetic-ingest probing. | HMD-008, HMD-013 | Collection/evaluation pass; external SMTP authentication blocks delivery proof |
+| HMD-014 | V1 | P0 | In Progress | Deploy persistent metric collection, dashboard, alert rules, and durable synthetic-ingest probing. | HMD-008, HMD-013 | Collection/evaluation/firing/recovery pass; external SMTP authentication blocks delivery proof |
 | HMD-015 | V1 | P0 | Done | Reconstruct critical gauges from durable state at startup. | HMD-006, HMD-014 | `docs/m3/VALIDATION.md`; restart test without new input |
 | HMD-016 | V1 | P0 | Done | Implement encrypted backup, integrity verification, and isolated restore. | HMD-006, HMD-013 | `docs/m3/VALIDATION.md`; reconciled restore report |
-| HMD-017 | V1 | P0 | In Progress | Exercise component and full-path reboots with queued work, persistent metrics, dashboards, and alert evaluation. | HMD-013–HMD-016 | Gateway reboot passed; application-host reboot pending |
-| HMD-018 | V1 | P0 | In Progress | Write and exercise restart, credential, storage, corruption, backup, no-report, and emergency-shutdown runbooks. | HMD-013–HMD-017 | `docs/runbooks/M3_OPERATIONS.md`; restart/backup/notification paths exercised |
+| HMD-017 | V1 | P0 | Done | Exercise component and full-path reboots with queued work, persistent metrics, dashboards, and alert evaluation. | HMD-013–HMD-016 | `docs/m3/VALIDATION.md`; both hosts and pre-boot queue/history verified |
+| HMD-018 | V1 | P0 | Done | Write and exercise restart, credential, storage, corruption, backup, no-report, and emergency-shutdown runbooks. | HMD-013–HMD-017 | `docs/runbooks/M3_OPERATIONS.md`; restart/backup/alert/emergency-stop paths exercised |
 
 ## Later — Processing and Data Lifecycle
 

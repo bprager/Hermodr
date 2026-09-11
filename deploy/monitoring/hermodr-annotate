@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+audit_id=${1:-}
+action=${2:-}
+case "$audit_id" in aud_[a-zA-Z0-9]*) ;; *) echo audit_id_invalid >&2; exit 2 ;; esac
+case "$action" in deployment|config_activate|credential_change) ;; *) echo action_invalid >&2; exit 2 ;; esac
+: "${GRAFANA_URL:?GRAFANA_URL is required}"
+: "${GRAFANA_USER:?GRAFANA_USER is required}"
+: "${GRAFANA_PASSWORD:?GRAFANA_PASSWORD is required}"
+payload=$(printf '{"dashboardUID":"hermodr-operations","tags":["hermodr","%s"],"text":"%s"}' "$action" "$audit_id")
+curl --fail --silent --show-error --user "${GRAFANA_USER}:${GRAFANA_PASSWORD}" \
+    --header 'Content-Type: application/json' --data "$payload" "${GRAFANA_URL}/api/annotations"

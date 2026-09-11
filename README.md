@@ -94,7 +94,7 @@ Receiver startup also requires schema migration 002, at least one active subject
 PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
 ```
 
-M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, encrypted backup verification, and isolated restore testing. The deployment remains synthetic-only until the M3 validation document's external notification and reboot gates pass.
+M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, encrypted backup verification, isolated restore testing, and full-path reboot proof. The deployment remains synthetic-only until the M3 validation document's external notification gate passes.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

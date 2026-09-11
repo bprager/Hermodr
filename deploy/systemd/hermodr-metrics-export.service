@@ -10,6 +10,7 @@ Group=hermodr-metrics
 SupplementaryGroups=hermodr
 Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
 Environment=HERMODR_METRICS_TARGET=/var/lib/hermodr/metrics/hermodr.prom
+Environment=HERMODR_READY_URL=http://127.0.0.1:8081/health/ready
 ExecStart=/usr/local/libexec/hermodr-export-metrics
 NoNewPrivileges=true
 PrivateDevices=true
@@ -17,4 +18,4 @@ PrivateTmp=true
 ProtectHome=false
 ProtectSystem=strict
 ReadWritePaths=/var/lib/hermodr/metrics
-RestrictAddressFamilies=AF_UNIX
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX

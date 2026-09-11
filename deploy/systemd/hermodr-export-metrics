@@ -8,5 +8,10 @@ if /opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin metrics
 else
     printf 'hermodr_metrics_bridge_up 0\n' >"$temporary"
 fi
+if curl --fail --silent --max-time 5 "${HERMODR_READY_URL:-http://127.0.0.1:8081/health/ready}" >/dev/null; then
+    printf 'hermodr_receiver_ready 1\n' >>"$temporary"
+else
+    printf 'hermodr_receiver_ready 0\n' >>"$temporary"
+fi
 chmod 0644 "$temporary"
 mv "$temporary" "$target"

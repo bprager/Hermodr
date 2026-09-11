@@ -73,7 +73,7 @@ The plan uses these priority levels:
 
 **Goal:** make collection safe to leave unattended before accepting real data.
 
-**Status:** In progress on 2026-09-11. Synthetic-only services, TLS routing, persistent monitoring, rules/dashboard, encrypted restore-tested backups, and the gateway reboot drill are complete. Application-host reboot evidence and successful external notification delivery remain gates.
+**Status:** In progress on 2026-09-11. Synthetic-only services, TLS routing, persistent monitoring, rules/dashboard, encrypted restore-tested backups, audit-ID annotations, alert firing/resolution, and both host reboot drills are complete. Successful external notification delivery remains the final exit gate.
 
 - P0 Create hardened, boot-enabled receiver/processor systemd units or Compose services with persistent data, dependency ordering, bounded restart backoff, and private bindings.
 - P0 Create fenrir route with TLS, request/method limits, rate limiting, sanitized access logs, and synthetic event test.

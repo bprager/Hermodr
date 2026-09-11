@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import patch
 
 from hermodr.backup import BackupError, TABLES, _protected_file, create_backup, verify_backup
+from hermodr.audit import AuditError, record_change
 from hermodr.cli import run
 from hermodr.config import Configuration
 from hermodr.database import connect, migrate
@@ -127,6 +128,32 @@ class BackupTests(OperationsTestCase):
 
 
 class ProcessorAndCliTests(OperationsTestCase):
+    def test_append_only_audit_chain_and_cli_boundary(self):
+        connection = connect(self.configuration)
+        try:
+            first = record_change(
+                connection, self.configuration, "deployment", "release_1", "m3_activation", "run_1",
+                now=datetime(2030, 1, 1, tzinfo=timezone.utc),
+            )
+            second = record_change(
+                connection, self.configuration, "credential_change", "key_synthetic", "rotation_test", "run_2",
+                now=datetime(2030, 1, 2, tzinfo=timezone.utc),
+            )
+            rows = tuple(connection.execute("SELECT audit_id, previous_hash, entry_hash FROM audit_events ORDER BY sequence"))
+        finally:
+            connection.close()
+        self.assertEqual((rows[0][0], rows[1][0]), (first, second))
+        self.assertIsNone(rows[0][1])
+        self.assertEqual(rows[1][1], rows[0][2])
+        with self.assertRaisesRegex(AuditError, "audit_fields_invalid"):
+            connection = connect(self.configuration)
+            try:
+                record_change(connection, self.configuration, "delete", "bad value", "x", "y")
+            finally:
+                connection.close()
+        with redirect_stdout(io.StringIO()) as missing:
+            self.assertEqual(run(["--config", str(self.config_path), "admin", "audit-change"]), 2)
+        self.assertIn("audit_arguments_missing", missing.getvalue())
     def test_processor_heartbeat_and_loop(self):
         heartbeat(self.configuration, 1234)
         connection = connect(self.configuration)
@@ -190,9 +217,14 @@ class DeploymentArtifactTests(unittest.TestCase):
         self.assertNotIn("$request_body", gateway)
         for alert in (
             "HermodrDurableIngestUnavailable", "HermodrIngestErrors", "HermodrIngestLatency",
-            "HermodrReportStale", "HermodrDiskPressure", "HermodrDatabaseIntegrity", "HermodrBackupStale",
+            "HermodrDatabaseErrors", "HermodrReportStale", "HermodrDiskPressure",
+            "HermodrDatabaseIntegrity", "HermodrBackupStale",
         ):
             self.assertIn(alert, rules)
+        exporter = (ROOT / "deploy/systemd/hermodr-export-metrics").read_text(encoding="utf-8")
+        self.assertIn("hermodr_receiver_ready 1", exporter)
+        annotator = (ROOT / "deploy/monitoring/hermodr-annotate").read_text(encoding="utf-8")
+        self.assertIn('"dashboardUID":"hermodr-operations"', annotator)
         dashboard = json.loads((ROOT / "deploy/monitoring/hermodr-dashboard.json").read_text(encoding="utf-8"))
         rows = [panel["title"] for panel in dashboard["panels"] if panel["type"] == "row"]
         self.assertEqual(rows, ["Ingestion", "Freshness", "Queue and processor", "Storage and recovery"])
