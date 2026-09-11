@@ -1,5 +1,7 @@
 from contextlib import redirect_stdout
+from dataclasses import asdict
 from datetime import datetime, timezone
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -7,9 +9,11 @@ import runpy
 import sqlite3
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
+import urllib.error
 import warnings
 import zipfile
 
@@ -20,6 +24,7 @@ from hermodr.clock import SystemClock, unix_milliseconds
 from hermodr.config import Configuration, ConfigurationError, load_configuration
 from hermodr.contracts import CONTRACT_ROOT, load_schema, validate
 from hermodr.database import (
+    APPROVED_SQLITE_BUILDS,
     DatabaseError,
     Migration,
     _statements,
@@ -30,6 +35,8 @@ from hermodr.database import (
     migrated_database,
     schema_version,
     sqlite_version_supported,
+    sqlite_build_approved,
+    sqlite_source_id,
 )
 from hermodr.enums import AuditAction, ErrorCode, JobState, METRIC_LABEL_VALUES, QualityFlag
 from hermodr.identifiers import canonical_json, deterministic_id, idempotency_key, sortable_id, source_digest
@@ -38,6 +45,7 @@ from hermodr.metrics import MetricRegistry, reconstruct_critical_metrics
 from hermodr.repository import NotFoundError, Repository
 import hermodr_build_backend
 from tools.static_analysis import Issue, analyze_source, python_files, run as static_run
+from tools import sqlite_runtime
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -264,6 +272,12 @@ class DatabaseAndRepositoryTests(FoundationTestCase):
         connection.close()
         self.assertTrue(sqlite_version_supported((3, 51, 3)))
         self.assertFalse(sqlite_version_supported((3, 51, 2)))
+        self.assertTrue(sqlite_source_id())
+        approved_source = sqlite_runtime.SQLITE_SOURCE_ID
+        self.assertTrue(sqlite_build_approved((3, 53, 4), approved_source))
+        self.assertFalse(sqlite_build_approved((3, 53, 4), "unapproved"))
+        with patch("hermodr.database.sqlite_source_id", return_value=approved_source):
+            self.assertTrue(sqlite_build_approved((3, 53, 4)))
         production = Configuration("production", self.database_path, "127.0.0.1", "INFO", 1000)
         with patch("hermodr.database.sqlite_version_supported", return_value=False):
             with self.assertRaisesRegex(DatabaseError, "sqlite_version_unsupported"):
@@ -272,6 +286,9 @@ class DatabaseAndRepositoryTests(FoundationTestCase):
                 connect(production)
             connection = connect(production, allow_unsafe_production=True)
             connection.close()
+        with patch("hermodr.database.sqlite_version_supported", return_value=True), patch("hermodr.database.sqlite_build_approved", return_value=False):
+            with self.assertRaisesRegex(DatabaseError, "sqlite_build_unapproved"):
+                assert_runtime_supported(production)
         assert_runtime_supported(Configuration("test", self.database_path, "127.0.0.1", "INFO", 1000))
 
     def test_subject_scoping_and_storage_invariants(self):
@@ -361,6 +378,7 @@ class ObservabilityTests(FoundationTestCase):
         self.assertIn("hermodr_worst_capture_age_seconds 3", rendered)
         self.assertIn('hermodr_quarantine_events{reason="contract_invalid"} 1', rendered)
         self.assertIn('hermodr_backup_status{stage="verify"} 1', rendered)
+        self.assertIn("hermodr_sqlite_build_info", rendered)
         connection.close()
         connection_path = self.database_path
         self.database_path = self.root / "empty" / "hermodr.sqlite"
@@ -457,3 +475,165 @@ except:
             warnings.simplefilter("ignore", RuntimeWarning)
             runpy.run_module("tools.static_analysis", run_name="__main__")
         self.assertEqual(raised.exception.code, 0)
+
+
+class SQLiteRuntimeSupplyTests(unittest.TestCase):
+    def _archive(self, path: Path, entries: dict[str, bytes], *, symlink: str | None = None):
+        with tarfile.open(path, "w:gz") as bundle:
+            for name, content in entries.items():
+                member = tarfile.TarInfo(name)
+                member.size = len(content)
+                bundle.addfile(member, io.BytesIO(content))
+            if symlink:
+                member = tarfile.TarInfo(symlink)
+                member.type = tarfile.SYMTYPE
+                member.linkname = "target"
+                bundle.addfile(member)
+
+    def _evidence(self, **changes):
+        values = {
+            "version": sqlite_runtime.SQLITE_VERSION,
+            "source_id": sqlite_runtime.SQLITE_SOURCE_ID,
+            "threadsafety": 3,
+            "json_available": True,
+            "trusted_schema_default_off": True,
+            "secure_delete_default_on": True,
+            "load_extension_omitted": True,
+        }
+        values.update(changes)
+        return sqlite_runtime.RuntimeEvidence(**values)
+
+    def test_supply_manifest_matches_enforced_identity(self):
+        manifest = json.loads((ROOT / "supply-chain" / "sqlite-runtime.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["version"], sqlite_runtime.SQLITE_VERSION)
+        self.assertEqual(manifest["url"], sqlite_runtime.SQLITE_URL)
+        self.assertEqual(manifest["archive"], sqlite_runtime.SQLITE_ARCHIVE)
+        self.assertEqual(manifest["archive_sha3_256"], sqlite_runtime.SQLITE_ARCHIVE_SHA3_256)
+        self.assertEqual(manifest["source_id"], sqlite_runtime.SQLITE_SOURCE_ID)
+        version = tuple(int(part) for part in manifest["version"].split("."))
+        self.assertEqual(APPROVED_SQLITE_BUILDS[version], manifest["source_id"])
+        self.assertEqual(manifest["compile_flags"], list(sqlite_runtime.COMPILE_FLAGS))
+        self.assertEqual(manifest["configure_flags"], list(sqlite_runtime.CONFIGURE_FLAGS))
+
+    def test_archive_hash_download_and_bounded_failure(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            archive = root / "archive.tar.gz"
+            archive.write_bytes(b"source")
+            digest = hashlib.sha3_256(b"source").hexdigest()
+            self.assertEqual(sqlite_runtime.archive_digest(archive), digest)
+            with patch.object(sqlite_runtime, "SQLITE_ARCHIVE_SHA3_256", digest):
+                sqlite_runtime.verify_archive(archive)
+                destination = root / "download.tar.gz"
+                with patch.object(sqlite_runtime, "SQLITE_URL", "data:application/octet-stream;base64,c291cmNl"):
+                    sqlite_runtime.download_archive(destination)
+                self.assertEqual(destination.read_bytes(), b"source")
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "checksum_mismatch"):
+                sqlite_runtime.verify_archive(archive)
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "archive_unreadable"):
+                sqlite_runtime.verify_archive(root / "missing")
+            destination = root / "wrong-download.tar.gz"
+            with patch.object(sqlite_runtime, "SQLITE_ARCHIVE_SHA3_256", "0" * 64), patch.object(sqlite_runtime, "SQLITE_URL", "data:application/octet-stream;base64,c291cmNl"):
+                with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "checksum_mismatch"):
+                    sqlite_runtime.download_archive(destination)
+            self.assertFalse(destination.with_suffix(".gz.partial").exists())
+            destination = root / "failed.tar.gz"
+            with patch("tools.sqlite_runtime.urllib.request.urlopen", side_effect=urllib.error.URLError("synthetic")):
+                with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "download_failed"):
+                    sqlite_runtime.download_archive(destination)
+            self.assertFalse(destination.with_suffix(".gz.partial").exists())
+
+    def test_safe_archive_extraction_and_layout(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            name = sqlite_runtime.SQLITE_ARCHIVE.removesuffix(".tar.gz")
+            archive = root / "valid.tar.gz"
+            self._archive(archive, {f"{name}/configure": b"#!/bin/sh\n", f"{name}/sqlite3.c": b"/* synthetic */\n"})
+            source = sqlite_runtime.extract_archive(archive, root / "valid")
+            self.assertTrue((source / "sqlite3.c").is_file())
+            unsafe = root / "unsafe.tar.gz"
+            self._archive(unsafe, {"../outside": b"value"})
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "archive_unsafe"):
+                sqlite_runtime.extract_archive(unsafe, root / "unsafe")
+            linked = root / "linked.tar.gz"
+            self._archive(linked, {}, symlink=f"{name}/linked")
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "archive_unsafe"):
+                sqlite_runtime.extract_archive(linked, root / "linked")
+            incomplete = root / "incomplete.tar.gz"
+            self._archive(incomplete, {f"{name}/sqlite3.c": b"value"})
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "layout_invalid"):
+                sqlite_runtime.extract_archive(incomplete, root / "incomplete")
+            corrupt = root / "corrupt.tar.gz"
+            corrupt.write_bytes(b"not-an-archive")
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "archive_invalid"):
+                sqlite_runtime.extract_archive(corrupt, root / "corrupt")
+
+    def test_execution_environment_and_probe_validation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            prefix = Path(temporary)
+            (prefix / "lib").mkdir()
+            (prefix / "lib" / "libsqlite3.so.0").write_bytes(b"synthetic")
+            with patch.dict("os.environ", {}, clear=True):
+                self.assertEqual(sqlite_runtime.runtime_environment(prefix)["LD_LIBRARY_PATH"], str((prefix / "lib").resolve()))
+            with patch.dict("os.environ", {"LD_LIBRARY_PATH": "/existing"}, clear=True):
+                self.assertTrue(sqlite_runtime.runtime_environment(prefix)["LD_LIBRARY_PATH"].endswith(":/existing"))
+            output = json.dumps(asdict(self._evidence()))
+            completed = subprocess.CompletedProcess([], 0, stdout=output, stderr="")
+            with patch("tools.sqlite_runtime.subprocess.run", return_value=completed):
+                self.assertEqual(sqlite_runtime.verify_runtime(prefix), self._evidence())
+            for result, error in (
+                (subprocess.CalledProcessError(1, []), "probe_failed"),
+                (subprocess.CompletedProcess([], 0, stdout="not-json", stderr=""), "probe_failed"),
+                (subprocess.CompletedProcess([], 0, stdout=json.dumps(asdict(self._evidence(version="0.0.0"))), stderr=""), "identity_mismatch"),
+                (subprocess.CompletedProcess([], 0, stdout=json.dumps(asdict(self._evidence(json_available=False))), stderr=""), "capability_mismatch"),
+            ):
+                with self.subTest(error=error), patch("tools.sqlite_runtime.subprocess.run", side_effect=result if isinstance(result, Exception) else None, return_value=None if isinstance(result, Exception) else result):
+                    with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, error):
+                        sqlite_runtime.verify_runtime(prefix)
+            (prefix / "lib" / "libsqlite3.so.0").unlink()
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "runtime_missing"):
+                sqlite_runtime.verify_runtime(prefix)
+        sqlite_runtime._execute([sys.executable, "-c", "pass"], ROOT)
+        with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "build_failed"):
+            sqlite_runtime._execute([sys.executable, "-c", "raise SystemExit(1)"], ROOT)
+
+    def test_build_orchestration_existing_and_new(self):
+        evidence = self._evidence()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            existing = root / "existing"
+            existing.mkdir()
+            with patch("tools.sqlite_runtime.verify_runtime", return_value=evidence) as verify:
+                self.assertEqual(sqlite_runtime.build_runtime(existing), evidence)
+                verify.assert_called_once_with(existing)
+            with self.assertRaisesRegex(sqlite_runtime.RuntimeSupplyError, "jobs_invalid"):
+                sqlite_runtime.build_runtime(root / "new", jobs=0)
+            source = root / "source"
+            source.mkdir()
+            (source / "configure").write_text("", encoding="utf-8")
+            calls = []
+            with patch("tools.sqlite_runtime.download_archive") as download, patch("tools.sqlite_runtime.extract_archive", return_value=source), patch("tools.sqlite_runtime._execute", side_effect=lambda *args: calls.append(args)), patch("tools.sqlite_runtime.verify_runtime", return_value=evidence):
+                self.assertEqual(sqlite_runtime.build_runtime(root / "new"), evidence)
+            self.assertTrue(download.called)
+            self.assertEqual(len(calls), 3)
+            supplied = root / "supplied.tar.gz"
+            supplied.write_bytes(b"synthetic")
+            with patch("tools.sqlite_runtime.verify_archive") as verify_archive, patch("tools.sqlite_runtime.extract_archive", return_value=source), patch("tools.sqlite_runtime._execute"), patch("tools.sqlite_runtime.verify_runtime", return_value=evidence):
+                self.assertEqual(sqlite_runtime.build_runtime(root / "other", supplied, 16), evidence)
+            verify_archive.assert_called_once_with(supplied)
+
+    def test_cli_and_module_entry_point(self):
+        evidence = self._evidence()
+        output = io.StringIO()
+        with patch("tools.sqlite_runtime.verify_runtime", return_value=evidence), redirect_stdout(output):
+            self.assertEqual(sqlite_runtime.run(["verify", "--prefix", "/synthetic"]), 0)
+        self.assertEqual(json.loads(output.getvalue())["status"], "ok")
+        output = io.StringIO()
+        with patch("tools.sqlite_runtime.build_runtime", side_effect=sqlite_runtime.RuntimeSupplyError("bounded_failure")), redirect_stdout(output):
+            self.assertEqual(sqlite_runtime.run(["build", "--prefix", "/synthetic", "--jobs", "1"]), 2)
+        self.assertNotIn("SENSITIVE_CANARY", output.getvalue())
+        argv = ["sqlite-runtime", "verify", "--prefix", "/synthetic"]
+        with warnings.catch_warnings(), patch("sys.argv", argv), patch("tools.sqlite_runtime.verify_runtime", return_value=evidence), redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as raised:
+            warnings.simplefilter("ignore", RuntimeWarning)
+            runpy.run_module("tools.sqlite_runtime", run_name="__main__")
+        self.assertEqual(raised.exception.code, 2)

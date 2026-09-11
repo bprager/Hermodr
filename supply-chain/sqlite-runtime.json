@@ -1,0 +1,22 @@
+{
+  "archive": "sqlite-autoconf-3530400.tar.gz",
+  "archive_sha3_256": "454e45f61c6bd75b7420e7190732dea03ce6639c63ada47bbc592f67fc340338",
+  "compile_flags": [
+    "-O2",
+    "-fPIC",
+    "-DSQLITE_DQS=0",
+    "-DSQLITE_TRUSTED_SCHEMA=0",
+    "-DSQLITE_SECURE_DELETE=1",
+    "-DSQLITE_DEFAULT_WAL_SYNCHRONOUS=2"
+  ],
+  "configure_flags": [
+    "--disable-static",
+    "--disable-readline",
+    "--disable-load-extension",
+    "--soname=legacy"
+  ],
+  "license": "public-domain",
+  "source_id": "2026-07-24 19:02:57 bf7c7f30031888f4e796e429ab3978879485813aaca6f641c7b33e4e09459bcc",
+  "url": "https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz",
+  "version": "3.53.4"
+}

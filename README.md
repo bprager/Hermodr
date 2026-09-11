@@ -45,6 +45,7 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [M1 validation evidence](docs/m1/VALIDATION.md)
 - [Observability and reboot contract](docs/m1/OBSERVABILITY.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
+- [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)
 
 Detailed product documentation is access-controlled project material. Never commit real coordinates, credentials, device identifiers, addresses, or production payloads.
@@ -83,6 +84,14 @@ PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json process
 ```
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
+
+The approved SQLite 3.53.4 runtime is checksum-pinned and built into an isolated local prefix without replacing the system library:
+
+```shell
+make sqlite-runtime
+make sqlite-runtime-check
+make sqlite-validated-check
+```
 
 ## Delivery sequence
 

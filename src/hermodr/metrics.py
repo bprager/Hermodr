@@ -22,6 +22,7 @@ class MetricDefinition:
 
 DEFINITIONS = {
     "hermodr_build_info": MetricDefinition("gauge", ("version", "commit", "schema_version")),
+    "hermodr_sqlite_build_info": MetricDefinition("gauge", ("version", "source_hash")),
     "hermodr_database_size_bytes": MetricDefinition("gauge", ("file_kind",)),
     "hermodr_filesystem_free_bytes": MetricDefinition("gauge", ()),
     "hermodr_processing_jobs": MetricDefinition("gauge", ("state",)),
@@ -49,7 +50,7 @@ class MetricRegistry:
         for label, item in labels.items():
             if not isinstance(item, str):
                 raise ValueError("metric_label_value_invalid")
-            if name == "hermodr_build_info":
+            if name in {"hermodr_build_info", "hermodr_sqlite_build_info"}:
                 if not SAFE_BUILD_LABEL.fullmatch(item):
                     raise ValueError("metric_label_value_invalid")
             elif item not in METRIC_LABEL_VALUES[label]:
@@ -61,6 +62,15 @@ class MetricRegistry:
 
     def build_info(self, build: BuildInfo = BUILD) -> None:
         self.set("hermodr_build_info", 1, **build.labels())
+
+    def sqlite_build_info(self, connection: sqlite3.Connection) -> None:
+        source_id = str(connection.execute("SELECT sqlite_source_id()").fetchone()[0])
+        self.set(
+            "hermodr_sqlite_build_info",
+            1,
+            version=sqlite3.sqlite_version,
+            source_hash=source_id.rsplit(" ", 1)[-1],
+        )
 
     def render(self) -> str:
         lines = []
@@ -75,6 +85,7 @@ class MetricRegistry:
 def reconstruct_critical_metrics(connection: sqlite3.Connection, now_ms: int) -> MetricRegistry:
     registry = MetricRegistry()
     registry.build_info()
+    registry.sqlite_build_info(connection)
     for state in JobState:
         count = connection.execute("SELECT COUNT(*) FROM processing_jobs WHERE state = ?", (state.value,)).fetchone()[0]
         registry.set("hermodr_processing_jobs", count, state=state.value)

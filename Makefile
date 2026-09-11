@@ -1,6 +1,7 @@
 PYTHON ?= python3
+SQLITE_PREFIX ?= $(CURDIR)/.runtime/sqlite-3.53.4
 
-.PHONY: artifact check demo dependency-check diff-check format-check lint markdown sensitive test coverage
+.PHONY: artifact check demo dependency-check diff-check format-check lint markdown sensitive sqlite-runtime sqlite-runtime-check sqlite-validated-check test coverage
 
 check: format-check lint dependency-check artifact test coverage markdown sensitive diff-check
 
@@ -11,6 +12,16 @@ artifact:
 
 demo:
 	PYTHONPATH=. $(PYTHON) -m tools.owntracks_spike
+
+sqlite-runtime:
+	@PYTHONPATH=src:. $(PYTHON) -m tools.sqlite_runtime build --prefix "$(SQLITE_PREFIX)"
+
+sqlite-runtime-check:
+	@PYTHONPATH=src:. $(PYTHON) -m tools.sqlite_runtime verify --prefix "$(SQLITE_PREFIX)"
+
+sqlite-validated-check: sqlite-runtime
+	@LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" PYTHONPATH=src:. $(PYTHON) -c 'from pathlib import Path; from hermodr.config import Configuration; from hermodr.database import assert_runtime_supported, sqlite_build_approved; c=Configuration("production", Path("unused.sqlite"), "127.0.0.1", "INFO", 1000); assert_runtime_supported(c); assert sqlite_build_approved()'
+	@LD_LIBRARY_PATH="$(SQLITE_PREFIX)/lib" $(MAKE) check
 
 format-check:
 	@! grep -RInE '[[:blank:]]+$$' --include='*.py' --include='*.md' --include='*.json' --include='Makefile' .
@@ -38,6 +49,7 @@ coverage:
 		-name 'tools.__init__.cover' -o \
 		-name 'tools.line_coverage.cover' -o \
 		-name 'tools.static_analysis.cover' -o \
+		-name 'tools.sqlite_runtime.cover' -o \
 		-name 'tools.owntracks_spike.*.cover' -o \
 		-name 'tests.__init__.cover' -o \
 		-name 'test_*.cover' \

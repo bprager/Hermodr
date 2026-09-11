@@ -307,6 +307,7 @@ All metric names use the `hermodr_` prefix. Labels are bounded enums only. Never
 | Metric | Type | Allowed labels | Purpose |
 | --- | --- | --- | --- |
 | `hermodr_build_info` | gauge | `version`, `commit`, `schema_version` | Release identity; value is 1. |
+| `hermodr_sqlite_build_info` | gauge | `version`, `source_hash` | Loaded native-library identity; value is 1 and an unexpected identity fails production startup. |
 | `hermodr_http_requests_total` | counter | `service`, `route`, `method`, `status_class` | Receiver traffic and failure rate. |
 | `hermodr_http_request_duration_seconds` | histogram | `service`, `route`, `method` | End-to-end request latency. |
 | `hermodr_ingest_events_total` | counter | `result`, `source_type` | `accepted`, `duplicate`, `rejected`, `quarantined`, `failed`. |
@@ -462,7 +463,7 @@ No production coordinates or credentials appear in fixtures. Test coordinates ar
 | Authentication mode | Decided: Basic over TLS; credential maps to device and subject | ADR 0004 |
 | Single vs batch body | Decided: one object; reject arrays; ignore empty publish | ADR 0005 |
 | Deployment | Decided: systemd on Odin | ADR 0003 |
-| SQLite driver/build | Decided: Python `sqlite3`, requiring SQLite >= 3.51.3 or an exact reviewed backport | ADR 0002 and M1 startup gate |
+| SQLite driver/build | Decided: Python `sqlite3` with exact-allowlisted private SQLite 3.53.4 runtime | ADR 0002 and `docs/m1/SQLITE_RUNTIME.md` |
 | Public hostname/path | Preserve `/v1/owntracks`; choose hostname operationally | Fenrir integration |
 | Retention defaults | PRD values, explicitly approved for version 1 and separately reviewed for version 2 | Each production gate |
 | Derivation thresholds | Calibrate with synthetic route, then user-approved real-device trial | Phase 2 acceptance |

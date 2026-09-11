@@ -24,6 +24,7 @@ The operations listener must remain private. Aggregate freshness still reveals a
 | Quarantine inventory | Pending `quarantine` rows by bounded reason | Review backlog survives restart |
 | Backup create/verify/restore-test state and time | `operational_state` | Explicit zero until recorded |
 | Build identity | Reproducible artifact metadata | Process identity, value always one |
+| SQLite build identity | Loaded library version and source hash | Detects loader fallback or unreviewed upgrades |
 
 Database/WAL size and filesystem capacity are sampled from the current persistent volume rather than retained in process memory. Integrity results and maintenance heartbeats will use `operational_state` and `service_heartbeats` when their workflows land.
 

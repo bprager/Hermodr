@@ -34,7 +34,7 @@ The plan uses these priority levels:
 
 **Goal:** create a testable artifact and stable boundaries.
 
-**Status:** Repository-complete on 2026-09-10. Production activation remains gated on the patched SQLite build and M2/M3 security and deployment work.
+**Status:** Repository-complete on 2026-09-10. The patched SQLite runtime supply is resolved; production activation remains gated on M2/M3 security and deployment work.
 
 - P0 Scaffold `receiver`, `processor`, `admin`, and `migrate` commands with shared configuration, logging, metrics, clock, and identifier packages.
 - P0 Add canonical JSON Schemas for observation, transition, visit, trip, coverage gap, place, and outbox envelope.

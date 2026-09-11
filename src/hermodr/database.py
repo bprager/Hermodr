@@ -12,6 +12,9 @@ from .config import Configuration
 
 
 MINIMUM_SAFE_SQLITE = (3, 51, 3)
+APPROVED_SQLITE_BUILDS = {
+    (3, 53, 4): "2026-07-24 19:02:57 bf7c7f30031888f4e796e429ab3978879485813aaca6f641c7b33e4e09459bcc",
+}
 
 
 class DatabaseError(RuntimeError):
@@ -22,9 +25,27 @@ def sqlite_version_supported(version: tuple[int, int, int] = sqlite3.sqlite_vers
     return version >= MINIMUM_SAFE_SQLITE
 
 
+def sqlite_source_id() -> str:
+    connection = sqlite3.connect(":memory:")
+    try:
+        return str(connection.execute("SELECT sqlite_source_id()").fetchone()[0])
+    finally:
+        connection.close()
+
+
+def sqlite_build_approved(
+    version: tuple[int, int, int] = sqlite3.sqlite_version_info,
+    source_id: str | None = None,
+) -> bool:
+    actual_source_id = sqlite_source_id() if source_id is None else source_id
+    return APPROVED_SQLITE_BUILDS.get(version) == actual_source_id
+
+
 def assert_runtime_supported(configuration: Configuration) -> None:
     if configuration.production and not sqlite_version_supported():
         raise DatabaseError("sqlite_version_unsupported")
+    if configuration.production and not sqlite_build_approved():
+        raise DatabaseError("sqlite_build_unapproved")
 
 
 def connect(configuration: Configuration, *, allow_unsafe_production: bool = False) -> sqlite3.Connection:

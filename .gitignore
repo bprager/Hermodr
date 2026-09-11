@@ -228,3 +228,6 @@ __marimo__/
 !src/**
 src/**/__pycache__/
 src/**/*.py[codz]
+
+# Reproducible private runtime build products
+.runtime/

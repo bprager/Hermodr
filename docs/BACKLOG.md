@@ -24,6 +24,7 @@
 | HMD-006 | V1 | P0 | Done | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject tests in `tests/test_m1_foundation.py` |
 | HMD-007 | V1 | P0 | Done | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | `contracts/v1`; synthetic golden contract suite |
 | HMD-008 | V1 | P0 | Done | Build the allowlist-only logging and metric facade with sensitive-canary tests. | HMD-005 | `docs/m1/OBSERVABILITY.md`; privacy tests |
+| HMD-036 | V1 | P0 | Done | Supply and verify an approved WAL-reset-fixed SQLite runtime without replacing the system library. | HMD-003 | `docs/m1/SQLITE_RUNTIME.md`; pinned manifest; runtime CI |
 
 ## Next — Secure Collection and Operations
 

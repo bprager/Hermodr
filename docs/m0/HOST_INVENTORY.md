@@ -38,7 +38,7 @@ Non-interactive SSH to the application-host alias failed because its referenced 
 
 - Use Python and systemd (ADRs 0001 and 0003).
 - Treat storage encryption, monitoring persistence, backup target/key recovery, and live application-host boot ordering as unverified production prerequisites.
-- Upgrade or bundle a patched SQLite before any WAL-based multi-process production test.
+- Use the pinned private SQLite runtime resolved in `docs/m1/SQLITE_RUNTIME.md` before any WAL-based multi-process production test; do not use the affected system library.
 - Do not deploy or modify either host during M0.
 
 ## Reproducible Follow-up Checks

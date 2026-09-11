@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - Allowlist-only structured logging and metric facade with durable critical-gauge reconstruction.
 - M1 observability/reboot contract and automated validation evidence.
 - Enforced standard-library-only dependency and license inventory with external-import scanning.
+- Reproducible private SQLite 3.53.4 supply with official archive checksum, exact source-identity validation, and application-linked CI testing.
 - Synthetic OwnTracks HTTP capture/replay harness covering supported message types, duplicates, ordering, body shapes, content types, empty publishes, and transient retry responses.
 - Standard-library test suite and CI with a strict greater-than-95-percent line coverage gate.
 - ADRs selecting Python, guarded SQLite, systemd, Basic-over-TLS authentication, and a single-object HTTP contract.
@@ -41,6 +42,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Security
 
-- Blocked production SQLite WAL activation until the linked library is version 3.51.3 or an explicitly reviewed fixed backport.
+- Replaced the unresolved SQLite availability prerequisite with an exact version/source allowlist, hardened compile flags, private loader path, and reboot-verification contract.
+- Continued rejecting the affected system SQLite library while approving only the pinned fixed private build for production WAL activation.
 - Added cross-subject isolation requirements and negative tests throughout authentication, storage, derivation, outbox, export, retention, and deletion.
 - Added independent device credential revocation and separately reviewed subject policies.
