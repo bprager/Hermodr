@@ -30,10 +30,10 @@
 
 | ID | Release | Priority | Status | Work | Dependency | Acceptance evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| HMD-009 | V1 | P0 | Ready | Implement credential-to-device-to-subject authentication and safe rotation. | HMD-006 | Authentication and isolation matrix |
-| HMD-010 | V1 | P0 | Ready | Implement strict validation, raw canonicalization, digest, idempotency, and atomic durable acknowledgement. | HMD-006, HMD-007 | Crash-boundary and duplicate tests |
-| HMD-011 | V1 | P0 | Ready | Implement quarantine, deterministic responses, graceful drain, liveness, and storage-backed readiness. | HMD-010 | Receiver conformance suite |
-| HMD-012 | V1 | P0 | Ready | Meet the durable-ingest latency and throughput targets on target storage. | HMD-010 | Reproducible load report |
+| HMD-009 | V1 | P0 | Done | Implement credential-to-device-to-subject authentication and safe rotation. | HMD-006 | `docs/m2/VALIDATION.md`; authentication/isolation matrix |
+| HMD-010 | V1 | P0 | Done | Implement strict validation, raw canonicalization, digest, idempotency, and atomic durable acknowledgement. | HMD-006, HMD-007 | `docs/m2/VALIDATION.md`; crash and duplicate tests |
+| HMD-011 | V1 | P0 | Done | Implement quarantine, deterministic responses, graceful drain, liveness, and storage-backed readiness. | HMD-010 | `docs/m2/VALIDATION.md`; receiver conformance suite |
+| HMD-012 | V1 | P0 | Done | Meet the durable-ingest latency and throughput targets on target storage. | HMD-010 | `docs/m2/VALIDATION.md`; synchronous-FULL load gate |
 | HMD-013 | V1 | P0 | Ready | Deploy boot-enabled hardened services and the restricted HTTPS gateway route. | HMD-002, HMD-011 | Deployment verification |
 | HMD-014 | V1 | P0 | Ready | Deploy persistent metric collection, dashboard, alert rules, and durable synthetic-ingest probing. | HMD-008, HMD-013 | Dashboard and alert test evidence |
 | HMD-015 | V1 | P0 | Ready | Reconstruct critical gauges from durable state at startup. | HMD-006, HMD-014 | Restart test without new input |

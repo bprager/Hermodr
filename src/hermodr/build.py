@@ -44,5 +44,5 @@ class BuildInfo:
 BUILD = BuildInfo(
     version=_safe_environment("HERMODR_BUILD_VERSION", ARTIFACT_VERSION or _package_version()),
     commit=_safe_environment("HERMODR_BUILD_COMMIT", ARTIFACT_COMMIT or "unknown"),
-    schema_version="1",
+    schema_version="2",
 )

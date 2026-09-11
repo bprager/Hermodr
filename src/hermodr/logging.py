@@ -5,17 +5,20 @@ import math
 import re
 from typing import TextIO
 
+from .enums import ErrorCode
+
 
 ALLOWED_FIELDS = frozenset({
     "attempt", "audit_id", "build", "config_fingerprint", "duration_ms",
     "event", "ingest_id", "key_id", "level", "message", "request_id",
-    "result", "run_id", "service", "stage", "timestamp",
+    "reason", "result", "run_id", "service", "stage", "timestamp",
 })
 BOUNDED_FIELDS = {
-    "event": frozenset({"failure", "migration", "ready", "startup"}),
+    "event": frozenset({"failure", "ingest", "migration", "ready", "startup"}),
     "level": frozenset({"DEBUG", "INFO", "WARNING", "ERROR"}),
-    "message": frozenset({"operation_failed", "service_ready", "service_starting"}),
-    "result": frozenset({"failure", "success"}),
+    "message": frozenset({"operation_failed", "request_completed", "service_ready", "service_starting"}),
+    "reason": frozenset(item.value for item in ErrorCode),
+    "result": frozenset({"accepted", "duplicate", "failure", "quarantined", "rejected", "success"}),
     "service": frozenset({"admin", "migrate", "processor", "receiver"}),
     "stage": frozenset({"configuration", "migration", "startup", "storage"}),
 }

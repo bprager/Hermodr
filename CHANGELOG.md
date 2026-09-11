@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- M2 secure durable receiver with separate ingestion and private operations listeners.
+- Protected-file HTTP Basic credentials bound to active device and subject records, including overlapping rotation windows and cross-subject rejection tests.
+- Strict request size, media type, encoding, JSON, timestamp, coordinate, message-type, and source-identity validation with deterministic responses.
+- Canonical raw evidence, SHA-256 source digests, keyed idempotency, safe transport metadata, and atomic processing-job creation.
+- Exact-duplicate acknowledgement, future-timestamp quarantine, graceful in-flight drain, liveness, and storage-backed readiness.
+- Bounded receiver counters and latency histograms plus database, WAL, shared-memory, filesystem, queue, quarantine, freshness, outbox, and backup gauges.
+- M2 crash-boundary, privacy-canary, dual-listener, authentication, conformance, and synchronous-FULL load tests with 100% aggregate line coverage.
+- M2 validation and observability documentation with explicit deployment and reboot limitations.
 - M1 dependency-free reproducible wheel with `receiver`, `processor`, `admin`, and `migrate` command boundaries.
 - Versioned strict SQLite migration framework and multi-subject-ready initial schema with scoped repository APIs.
 - Canonical JSON Schemas and synthetic golden fixtures for observations, transitions, visits, trips, coverage gaps, places, and outbox envelopes.
@@ -31,6 +39,9 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Advanced secure-collection backlog items HMD-009 through HMD-012 to Done and made M3 deployment/recovery work the active next milestone.
+- Advanced the database schema to version 2 with safe receiver metadata, registered source identifiers, globally unique credential key IDs, and one processing job per ingest.
+- Changed `hermodr receiver` from a startup-only scaffold into the runnable receiver service while retaining `--check` validation.
 - Completed the repository-executable M1 contracts foundation and advanced foundation backlog items HMD-005 through HMD-008 to Done.
 - Expanded CI to build the release artifact and validate migrations, canonical contracts, cross-subject isolation, and observable-output privacy.
 - Completed the repository-executable M0 decision spike and recorded remaining hardware and policy checks as explicit production gates.
@@ -42,6 +53,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Security
 
+- Added constant-time credential comparison, fail-closed secret permission/length checks, generic authentication failures, payload identity checks, and stable deduplication secrets outside source control.
+- Ensured public routes cannot expose private health or metrics endpoints and tested observable output against credential, coordinate, and parser-error canaries.
 - Replaced the unresolved SQLite availability prerequisite with an exact version/source allowlist, hardened compile flags, private loader path, and reboot-verification contract.
 - Continued rejecting the affected system SQLite library while approving only the pinned fixed private build for production WAL activation.
 - Added cross-subject isolation requirements and negative tests throughout authentication, storage, derivation, outbox, export, retention, and deletion.

@@ -10,15 +10,17 @@ from .build import BUILD
 from .config import ConfigurationError, load_configuration
 from .database import DatabaseError, connect, migrate, schema_version
 from .metrics import reconstruct_critical_metrics
+from .receiver import ReceiverApplication, ReceiverError, ReceiverService
 
 
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="hermodr")
     root.add_argument("--config", type=Path, required=True)
     commands = root.add_subparsers(dest="command", required=True)
-    for name in ("receiver", "processor"):
-        command = commands.add_parser(name)
-        command.add_argument("--check", action="store_true", required=True)
+    receiver = commands.add_parser("receiver")
+    receiver.add_argument("--check", action="store_true")
+    processor = commands.add_parser("processor")
+    processor.add_argument("--check", action="store_true", required=True)
     admin = commands.add_parser("admin")
     admin.add_argument("action", choices=("build-info", "metrics"))
     migration = commands.add_parser("migrate")
@@ -42,7 +44,15 @@ def run(arguments: list[str] | None = None) -> int:
                 return 0
             if schema_version(connection) != int(BUILD.schema_version):
                 raise DatabaseError("schema_version_invalid")
-            if args.command in {"receiver", "processor"}:
+            if args.command == "receiver":
+                connection.execute("SELECT 1").fetchone()
+                service = ReceiverService(configuration, sys.stderr)
+                if args.check:
+                    service.startup_check()
+                    _safe_result(command=args.command, config_fingerprint=configuration.fingerprint, status="ready")
+                else:
+                    ReceiverApplication(service).serve()
+            elif args.command == "processor":
                 connection.execute("SELECT 1").fetchone()
                 _safe_result(command=args.command, config_fingerprint=configuration.fingerprint, status="ready")
             elif args.command == "admin" and args.action == "build-info":
@@ -54,7 +64,7 @@ def run(arguments: list[str] | None = None) -> int:
             return 0
         finally:
             connection.close()
-    except (ConfigurationError, DatabaseError) as exc:
+    except (ConfigurationError, DatabaseError, ReceiverError) as exc:
         _safe_result(error=str(exc), status="error")
         return 2
     except (OSError, sqlite3.Error):

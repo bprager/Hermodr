@@ -1,7 +1,15 @@
 {
   "busy_timeout_ms": 5000,
   "database_path": "./var/hermodr.sqlite",
+  "dedupe_key_path": "./secrets/dedupe.key",
+  "disk_floor_bytes": 1048576,
+  "drain_timeout_ms": 5000,
   "environment": "development",
   "log_level": "INFO",
-  "operations_bind": "127.0.0.1"
+  "max_body_bytes": 65536,
+  "max_future_seconds": 300,
+  "operations_bind": "127.0.0.1",
+  "operations_port": 8081,
+  "public_bind": "127.0.0.1",
+  "public_port": 8080
 }

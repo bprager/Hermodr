@@ -19,6 +19,14 @@ class Configuration:
     operations_bind: str
     log_level: str
     busy_timeout_ms: int
+    public_bind: str = "127.0.0.1"
+    public_port: int = 8080
+    operations_port: int = 8081
+    max_body_bytes: int = 65_536
+    disk_floor_bytes: int = 1_048_576
+    drain_timeout_ms: int = 5_000
+    max_future_seconds: int = 300
+    dedupe_key_path: Path | None = None
 
     @property
     def production(self) -> bool:
@@ -28,9 +36,16 @@ class Configuration:
     def fingerprint(self) -> str:
         safe = {
             "busy_timeout_ms": self.busy_timeout_ms,
+            "disk_floor_bytes": self.disk_floor_bytes,
+            "drain_timeout_ms": self.drain_timeout_ms,
             "environment": self.environment,
             "log_level": self.log_level,
+            "max_body_bytes": self.max_body_bytes,
+            "max_future_seconds": self.max_future_seconds,
             "operations_bind": self.operations_bind,
+            "operations_port": self.operations_port,
+            "public_bind": self.public_bind,
+            "public_port": self.public_port,
         }
         return hashlib.sha256(canonical_json(safe)).hexdigest()[:16]
 
@@ -42,14 +57,26 @@ def load_configuration(path: Path) -> Configuration:
         raise ConfigurationError("configuration_unreadable") from exc
     if not isinstance(raw, dict):
         raise ConfigurationError("configuration_not_object")
-    allowed = {"environment", "database_path", "operations_bind", "log_level", "busy_timeout_ms"}
-    if set(raw) - allowed or not allowed.issubset(raw):
+    required = {"environment", "database_path", "operations_bind", "log_level", "busy_timeout_ms"}
+    allowed = required | {
+        "public_bind", "public_port", "operations_port", "max_body_bytes",
+        "disk_floor_bytes", "drain_timeout_ms", "max_future_seconds", "dedupe_key_path",
+    }
+    if set(raw) - allowed or not required.issubset(raw):
         raise ConfigurationError("configuration_fields_invalid")
     environment = raw["environment"]
     database_path = raw["database_path"]
     operations_bind = raw["operations_bind"]
     log_level = raw["log_level"]
     timeout = raw["busy_timeout_ms"]
+    public_bind = raw.get("public_bind", "127.0.0.1")
+    public_port = raw.get("public_port", 8080)
+    operations_port = raw.get("operations_port", 8081)
+    max_body_bytes = raw.get("max_body_bytes", 65_536)
+    disk_floor_bytes = raw.get("disk_floor_bytes", 1_048_576)
+    drain_timeout_ms = raw.get("drain_timeout_ms", 5_000)
+    max_future_seconds = raw.get("max_future_seconds", 300)
+    dedupe_path = raw.get("dedupe_key_path")
     if not isinstance(environment, str) or environment not in {"development", "test", "production"}:
         raise ConfigurationError("environment_invalid")
     if not isinstance(database_path, str) or not database_path or database_path == ":memory:":
@@ -60,4 +87,28 @@ def load_configuration(path: Path) -> Configuration:
         raise ConfigurationError("log_level_invalid")
     if isinstance(timeout, bool) or not isinstance(timeout, int) or not 100 <= timeout <= 60_000:
         raise ConfigurationError("busy_timeout_invalid")
-    return Configuration(environment, Path(database_path), operations_bind, log_level, timeout)
+    if not isinstance(public_bind, str) or not public_bind:
+        raise ConfigurationError("public_bind_invalid")
+    for value, error in ((public_port, "public_port_invalid"), (operations_port, "operations_port_invalid")):
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 65_535:
+            raise ConfigurationError(error)
+    if environment == "production" and (public_port == 0 or operations_port == 0):
+        raise ConfigurationError("listener_port_invalid")
+    if public_bind == operations_bind and public_port == operations_port:
+        raise ConfigurationError("listener_collision")
+    limits = (
+        (max_body_bytes, 1, 1_048_576, "max_body_bytes_invalid"),
+        (disk_floor_bytes, 0, 2**63 - 1, "disk_floor_bytes_invalid"),
+        (drain_timeout_ms, 1, 300_000, "drain_timeout_invalid"),
+        (max_future_seconds, 0, 86_400, "max_future_seconds_invalid"),
+    )
+    for value, low, high, error in limits:
+        if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+            raise ConfigurationError(error)
+    if dedupe_path is not None and (not isinstance(dedupe_path, str) or not dedupe_path):
+        raise ConfigurationError("dedupe_key_path_invalid")
+    return Configuration(
+        environment, Path(database_path), operations_bind, log_level, timeout,
+        public_bind, public_port, operations_port, max_body_bytes, disk_floor_bytes,
+        drain_timeout_ms, max_future_seconds, None if dedupe_path is None else Path(dedupe_path),
+    )

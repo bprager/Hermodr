@@ -1,6 +1,6 @@
 # Hermóðr Implementation Design
 
-**Status:** Implemented through M1; later milestone sections remain proposed
+**Status:** Implemented through M2; deployment and later milestone sections remain proposed
 **Source:** `docs/HERMODR_PRD.md`, version 1.1
 **Scope:** Version 1 through guarded outbox publication plus the immediately following two-subject version 2; the Napoleon importer is an external consumer
 

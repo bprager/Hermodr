@@ -60,7 +60,7 @@ coverage:
 markdown:
 	@test -f README.md -a -f CHANGELOG.md -a -f docs/BACKLOG.md
 	@! grep -RInE '[[:blank:]]+$$' --include='*.md' .
-	@for target in docs/HERMODR_PRD.md docs/IMPLEMENTATION_DESIGN.md docs/IMPLEMENTATION_PLAN.md docs/BACKLOG.md CHANGELOG.md docs/m1/VALIDATION.md; do test -f "$$target"; done
+	@for target in docs/HERMODR_PRD.md docs/IMPLEMENTATION_DESIGN.md docs/IMPLEMENTATION_PLAN.md docs/BACKLOG.md CHANGELOG.md docs/m1/VALIDATION.md docs/m2/VALIDATION.md docs/m2/OBSERVABILITY.md; do test -f "$$target"; done
 
 sensitive:
 	@! grep -RInE --exclude-dir=.git --exclude='Makefile' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|Authorization:[[:space:]]*(Basic|Bearer)[[:space:]]+[A-Za-z0-9+/=_-]{12,})' .

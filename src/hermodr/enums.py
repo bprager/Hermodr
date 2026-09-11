@@ -49,6 +49,11 @@ class AuditAction(StrEnum):
 METRIC_LABEL_VALUES = {
     "file_kind": frozenset({"database", "wal", "shared_memory"}),
     "reason": frozenset(item.value for item in ErrorCode),
+    "method": frozenset({"GET", "POST", "other"}),
+    "operation": frozenset({"commit", "readiness"}),
+    "route": frozenset({"ingest", "live", "ready", "metrics", "other"}),
+    "service": frozenset({"receiver"}),
+    "status_class": frozenset({"2xx", "4xx", "5xx"}),
     "result": frozenset({"accepted", "duplicate", "rejected", "quarantined", "failed", "success", "retry"}),
     "source_type": frozenset({"location", "transition", "waypoint", "status", "unknown"}),
     "stage": frozenset({"create", "verify", "restore_test"}),

@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol spike and repository/contracts foundation. Production ingestion and deployment have not started.
+The project has completed its protocol spike, contracts foundation, and secure durable receiver. Production deployment and real-device commissioning have not started.
 
 ## Architecture
 
@@ -44,6 +44,8 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [M0 protocol findings](docs/m0/OWNTRACKS_HTTP_FINDINGS.md)
 - [M1 validation evidence](docs/m1/VALIDATION.md)
 - [Observability and reboot contract](docs/m1/OBSERVABILITY.md)
+- [M2 receiver validation evidence](docs/m2/VALIDATION.md)
+- [M2 receiver observability](docs/m2/OBSERVABILITY.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)
@@ -61,7 +63,7 @@ hermodr admin
 hermodr migrate
 ```
 
-Python 3.13 or newer is the selected implementation runtime. Receiver and processor currently provide fail-closed startup checks; their network and processing behavior begins in later milestones.
+Python 3.13 or newer is the selected implementation runtime. The receiver now serves authenticated ingestion plus separate private operations endpoints. The processor remains a fail-closed startup boundary until its processing milestone.
 
 ## Development
 
@@ -82,6 +84,14 @@ PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json migrate
 PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json receiver --check
 PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json processor --check
 ```
+
+Receiver startup also requires schema migration 002, at least one active subject/device/credential mapping, a protected credential file, and a stable deduplication key file. Secret files must be outside source control, contain sufficiently long random values, and have mode `0600`. Run the receiver without `--check` only behind an approved TLS gateway:
+
+```shell
+PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
+```
+
+M2 preserves acknowledged events and reconstructs critical database-backed gauges across process or host restarts. Boot-enabled services, persistent monitoring storage, alert delivery, gateway hardening, encrypted backup/restore, and complete reboot drills are intentionally gated on M3.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

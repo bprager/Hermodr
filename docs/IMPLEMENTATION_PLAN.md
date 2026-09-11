@@ -1,6 +1,6 @@
 # Hermóðr Implementation Plan
 
-**Status:** Active; M0 and M1 are repository-complete
+**Status:** Active; M0 through M2 are repository-complete
 **Companion design:** `docs/IMPLEMENTATION_DESIGN.md`
 
 ## 1. Delivery Approach
@@ -53,6 +53,8 @@ The plan uses these priority levels:
 
 **Goal:** meet Phase 1 collection requirements without enrichment coupling.
 
+**Status:** Repository-complete on 2026-09-11. Public TLS/rate limiting, boot activation, persistent monitoring, alert delivery, backup/restore, and full-path reboot proof remain M3 gates.
+
 - P0 Implement separate public ingestion and private operations listeners.
 - P0 Implement authentication, rotation overlap, allowlists, size/content/encoding/JSON validation, and deterministic response codes.
 - P0 Bind every credential to one registered device and subject; reject payload identity mismatches.
@@ -64,6 +66,8 @@ The plan uses these priority levels:
 - P0 Load-test at 10 requests/second with synchronous durability enabled.
 
 **Exit evidence:** crash-boundary test proves no acknowledged loss; p95 acceptance below 500 ms at target load; duplicate and validation matrix passes; no sensitive canary appears in observable output.
+
+**Evidence:** schema migration 002; dual-listener receiver; protected secret references and overlapping credentials; atomic ingest repository; bounded metrics/logging; 61-test suite at 100% line coverage; `docs/m2/VALIDATION.md` and `docs/m2/OBSERVABILITY.md`.
 
 ### M3 — Deployment, reboot, monitoring, and recovery baseline
 

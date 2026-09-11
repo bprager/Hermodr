@@ -179,7 +179,7 @@ class IdentifierAndBuildTests(unittest.TestCase):
                 "from hermodr.database import available_migrations; "
                 "from hermodr import BUILD; "
                 "assert load_schema('observation')['type'] == 'object'; "
-                "assert len(available_migrations()) == 1; "
+                "assert len(available_migrations()) == 2; "
                 "assert BUILD.version == '0.1.0.dev0'"
             )
             completed = subprocess.run([sys.executable, "-I", "-c", command, str(Path(output) / name)], check=False)
@@ -236,7 +236,7 @@ class DatabaseAndRepositoryTests(FoundationTestCase):
     def test_empty_database_migrates_idempotently_with_expected_schema(self):
         configuration = load_configuration(self.config_path)
         with migrated_database(configuration) as connection:
-            self.assertEqual(schema_version(connection), 1)
+            self.assertEqual(schema_version(connection), 2)
             self.assertEqual(migrate(connection), ())
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
             expected = {"subjects", "devices", "credentials", "raw_events", "processing_jobs", "observations", "places", "transitions", "visits", "trips", "coverage_gaps", "record_evidence", "recompute_windows", "outbox_records", "quarantine", "audit_events", "service_heartbeats", "retention_holds", "operational_state", "schema_migrations"}
@@ -400,8 +400,8 @@ class CommandTests(FoundationTestCase):
     def test_migrate_and_all_command_scaffolds(self):
         result, output = self.invoke("migrate", "up")
         self.assertEqual(result, 0)
-        self.assertEqual(json.loads(output)["applied"], [1])
-        for arguments in (("receiver", "--check"), ("processor", "--check"), ("migrate", "status"), ("admin", "build-info"), ("admin", "metrics")):
+        self.assertEqual(json.loads(output)["applied"], [1, 2])
+        for arguments in (("processor", "--check"), ("migrate", "status"), ("admin", "build-info"), ("admin", "metrics")):
             with self.subTest(arguments=arguments):
                 result, output = self.invoke(*arguments)
                 self.assertEqual(result, 0)
