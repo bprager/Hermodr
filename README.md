@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol spike, contracts foundation, and secure durable receiver. Production deployment and real-device commissioning have not started.
+The project has completed its protocol spike, contracts foundation, secure durable receiver, and synthetic-only operational deployment baseline. Real-device commissioning has not started.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ HTTPS gateway -> receiver -> durable restricted store
                     separately authorized importer
 ```
 
-The receiver and processor are independent processes. The receiver acknowledges an event only after durable storage. The processor performs deterministic, versioned normalization and derivation asynchronously. Direct graph-database writes are outside the service boundary.
+The receiver and processor are independent processes. The receiver acknowledges an event only after durable storage. In M3 the processor is a boot/recovery heartbeat sentinel; deterministic queue processing begins in M4. Direct graph-database writes are outside the service boundary.
 
 ## Design priorities
 
@@ -46,6 +46,9 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [Observability and reboot contract](docs/m1/OBSERVABILITY.md)
 - [M2 receiver validation evidence](docs/m2/VALIDATION.md)
 - [M2 receiver observability](docs/m2/OBSERVABILITY.md)
+- [M3 operations baseline](docs/m3/OPERATIONS.md)
+- [M3 validation evidence](docs/m3/VALIDATION.md)
+- [M3 operator runbook](docs/runbooks/M3_OPERATIONS.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)
@@ -91,7 +94,7 @@ Receiver startup also requires schema migration 002, at least one active subject
 PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
 ```
 
-M2 preserves acknowledged events and reconstructs critical database-backed gauges across process or host restarts. Boot-enabled services, persistent monitoring storage, alert delivery, gateway hardening, encrypted backup/restore, and complete reboot drills are intentionally gated on M3.
+M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, encrypted backup verification, and isolated restore testing. The deployment remains synthetic-only until the M3 validation document's external notification and reboot gates pass.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

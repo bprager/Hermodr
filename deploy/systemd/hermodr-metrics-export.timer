@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh Hermodr durable metrics
+
+[Timer]
+OnBootSec=15s
+OnUnitActiveSec=30s
+AccuracySec=5s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,106 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Hermodr delivery
+    folder: Hermodr
+    interval: 1m
+    rules:
+      - uid: hermodr-critical-delivery
+        title: Hermodr critical condition
+        condition: C
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: hermodr-prometheus
+            model:
+              datasource: {type: prometheus, uid: hermodr-prometheus}
+              editorMode: code
+              expr: 'count(ALERTS{alertstate="firing",severity="critical"}) or vector(0)'
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            queryType: ""
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            queryType: ""
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: B
+              refId: C
+              type: threshold
+        dashboardUid: hermodr-operations
+        panelId: 2
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 1m
+        annotations: {summary: "One or more critical Hermodr alerts are firing"}
+        labels: {service: hermodr, severity: critical}
+        isPaused: false
+      - uid: hermodr-warning-delivery
+        title: Hermodr warning condition
+        condition: C
+        data:
+          - refId: A
+            queryType: ""
+            relativeTimeRange: {from: 300, to: 0}
+            datasourceUid: hermodr-prometheus
+            model:
+              datasource: {type: prometheus, uid: hermodr-prometheus}
+              editorMode: code
+              expr: 'count(ALERTS{alertstate="firing",severity="warning"}) or vector(0)'
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            queryType: ""
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            queryType: ""
+            relativeTimeRange: {from: 0, to: 0}
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: B
+              refId: C
+              type: threshold
+        dashboardUid: hermodr-operations
+        panelId: 5
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations: {summary: "One or more warning Hermodr alerts are firing"}
+        labels: {service: hermodr, severity: warning}
+        isPaused: false

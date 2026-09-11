@@ -45,6 +45,8 @@ DEFINITIONS = {
     "hermodr_worst_capture_age_seconds": MetricDefinition("gauge", ()),
     "hermodr_backup_status": MetricDefinition("gauge", ("stage",)),
     "hermodr_backup_last_success_timestamp_seconds": MetricDefinition("gauge", ("stage",)),
+    "hermodr_database_integrity_status": MetricDefinition("gauge", ()),
+    "hermodr_processor_heartbeat_age_seconds": MetricDefinition("gauge", ()),
 }
 
 
@@ -148,6 +150,8 @@ def reconstruct_critical_metrics(connection: sqlite3.Connection, now_ms: int) ->
     registry = MetricRegistry()
     registry.build_info()
     registry.sqlite_build_info(connection)
+    integrity = connection.execute("PRAGMA quick_check").fetchone()[0]
+    registry.set("hermodr_database_integrity_status", 1 if integrity == "ok" else 0)
     database_name = str(connection.execute("PRAGMA database_list").fetchone()[2])
     if database_name:
         database_path = Path(database_name)
@@ -180,6 +184,13 @@ def reconstruct_critical_metrics(connection: sqlite3.Connection, now_ms: int) ->
     ).fetchone()
     registry.set("hermodr_worst_ingest_age_seconds", 0 if newest_receipt is None else max(0, now_ms - newest_receipt) / 1000)
     registry.set("hermodr_worst_capture_age_seconds", 0 if newest_capture is None else max(0, now_ms - newest_capture) / 1000)
+    heartbeat = connection.execute(
+        "SELECT last_success_ms FROM service_heartbeats WHERE service = 'processor'"
+    ).fetchone()
+    registry.set(
+        "hermodr_processor_heartbeat_age_seconds",
+        0 if heartbeat is None else max(0, now_ms - heartbeat[0]) / 1000,
+    )
     for row in connection.execute("SELECT reason_code, COUNT(*) FROM quarantine WHERE review_state = 'pending' GROUP BY reason_code"):
         registry.set("hermodr_quarantine_events", row[1], reason=row[0])
     for stage in ("create", "verify", "restore_test"):

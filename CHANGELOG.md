@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- Synthetic-only M3 deployment with hardened boot-enabled migration, receiver, processor-sentinel, metric-export, and encrypted-backup units and persistent timers.
+- Restricted TLS gateway route with method/body/time/rate limits, sanitized access logging, peer filtering, and private-route denial tests.
+- Persistent Prometheus collection with 12 recording/alert rules and a four-row Grafana operations dashboard plus notification bridge rules.
+- GPG AES-256 SQLite online backups with encrypted manifests, integrity checks, schema/table/identifier reconciliation, and isolated restore testing.
+- Restart, rotation, storage-pressure, corruption, restore, no-report, endpoint-shutdown, and notification-failure runbooks.
+- M3 backup, recovery, processor-sentinel, deployment-artifact, and CLI tests while retaining greater-than-95-percent aggregate coverage.
 - M2 secure durable receiver with separate ingestion and private operations listeners.
 - Protected-file HTTP Basic credentials bound to active device and subject records, including overlapping rotation windows and cross-subject rejection tests.
 - Strict request size, media type, encoding, JSON, timestamp, coordinate, message-type, and source-identity validation with deterministic responses.
@@ -39,6 +45,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Advanced M3 deployment, critical-gauge reconstruction, and backup work to complete; retained external notification delivery and full application-host reboot as explicit gates.
+- Corrected the live Grafana Compose environment precedence that previously blanked configured SMTP connection values.
 - Advanced secure-collection backlog items HMD-009 through HMD-012 to Done and made M3 deployment/recovery work the active next milestone.
 - Advanced the database schema to version 2 with safe receiver metadata, registered source identifiers, globally unique credential key IDs, and one processing job per ingest.
 - Changed `hermodr receiver` from a startup-only scaffold into the runnable receiver service while retaining `--check` validation.

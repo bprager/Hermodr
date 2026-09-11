@@ -1,0 +1,31 @@
+{
+  "annotations": {"list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}]},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "id": 1, "panels": [], "title": "Ingestion", "type": "row"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []}, "gridPos": {"h": 6, "w": 8, "x": 0, "y": 1}, "id": 2, "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"}, "targets": [{"expr": "hermodr_metrics_bridge_up", "refId": "A"}], "title": "Durable metrics bridge", "type": "stat"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {}, "overrides": []}, "gridPos": {"h": 6, "w": 16, "x": 8, "y": 1}, "id": 3, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "sum by (status_class) (rate(hermodr_http_requests_total{route=\"ingest\"}[5m]))", "legendFormat": "{{status_class}}", "refId": "A"}], "title": "Ingest requests by result", "type": "timeseries"},
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7}, "id": 4, "panels": [], "title": "Freshness", "type": "row"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8}, "id": 5, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_worst_ingest_age_seconds", "legendFormat": "receipt", "refId": "A"}, {"expr": "hermodr_worst_capture_age_seconds", "legendFormat": "capture", "refId": "B"}], "title": "Worst subject freshness", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8}, "id": 6, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_reporting_subjects", "legendFormat": "{{state}}", "refId": "A"}], "title": "Reporting subjects (aggregate)", "type": "timeseries"},
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 14}, "id": 7, "panels": [], "title": "Queue and processor", "type": "row"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 15}, "id": 8, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_processing_jobs", "legendFormat": "{{state}}", "refId": "A"}], "title": "Durable jobs", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 15}, "id": 9, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_processing_oldest_pending_age_seconds", "legendFormat": "oldest pending", "refId": "A"}, {"expr": "hermodr_processor_heartbeat_age_seconds", "legendFormat": "sentinel heartbeat", "refId": "B"}], "title": "Queue and sentinel age", "type": "timeseries"},
+    {"collapsed": false, "gridPos": {"h": 1, "w": 24, "x": 0, "y": 21}, "id": 10, "panels": [], "title": "Storage and recovery", "type": "row"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 0, "y": 22}, "id": 11, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_database_size_bytes", "legendFormat": "{{file_kind}}", "refId": "A"}, {"expr": "hermodr_filesystem_free_bytes", "legendFormat": "filesystem free", "refId": "B"}], "title": "Database and free space", "type": "timeseries"},
+    {"datasource": {"type": "prometheus", "uid": "hermodr-prometheus"}, "fieldConfig": {"defaults": {}, "overrides": []}, "gridPos": {"h": 6, "w": 12, "x": 12, "y": 22}, "id": 12, "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}}, "targets": [{"expr": "hermodr_database_integrity_status", "legendFormat": "integrity", "refId": "A"}, {"expr": "hermodr_backup_status", "legendFormat": "backup {{stage}}", "refId": "B"}], "title": "Integrity and backup stages", "type": "timeseries"}
+  ],
+  "refresh": "30s",
+  "schemaVersion": 40,
+  "tags": ["hermodr", "restricted-aggregate"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timezone": "browser",
+  "title": "Hermodr Operations",
+  "uid": "hermodr-operations",
+  "version": 1
+}

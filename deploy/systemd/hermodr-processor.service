@@ -1,0 +1,36 @@
+[Unit]
+Description=Hermodr processor boot sentinel
+After=hermodr-migrate.service
+Requires=hermodr-migrate.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=hermodr
+Group=hermodr
+Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
+ExecStart=/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json processor --interval-seconds 30
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/hermodr
+RestrictAddressFamilies=AF_UNIX
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

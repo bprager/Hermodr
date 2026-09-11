@@ -1,0 +1,20 @@
+[Unit]
+Description=Export private Hermodr metrics for node exporter
+After=hermodr-migrate.service
+Requires=hermodr-migrate.service
+
+[Service]
+Type=oneshot
+User=hermodr
+Group=hermodr-metrics
+SupplementaryGroups=hermodr
+Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
+Environment=HERMODR_METRICS_TARGET=/var/lib/hermodr/metrics/hermodr.prom
+ExecStart=/usr/local/libexec/hermodr-export-metrics
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=false
+ProtectSystem=strict
+ReadWritePaths=/var/lib/hermodr/metrics
+RestrictAddressFamilies=AF_UNIX

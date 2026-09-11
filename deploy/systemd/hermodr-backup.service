@@ -1,0 +1,19 @@
+[Unit]
+Description=Create and restore-test an encrypted Hermodr backup
+After=hermodr-migrate.service
+Requires=hermodr-migrate.service
+
+[Service]
+Type=oneshot
+User=hermodr
+Group=hermodr
+Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
+ExecStart=/usr/local/libexec/hermodr-backup
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/hermodr /var/backups/hermodr
+RestrictAddressFamilies=AF_UNIX
+UMask=0077

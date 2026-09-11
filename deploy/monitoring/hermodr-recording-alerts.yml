@@ -1,0 +1,58 @@
+groups:
+  - name: hermodr-recording
+    interval: 30s
+    rules:
+      - record: hermodr:ingest_availability:5m
+        expr: sum(rate(hermodr_http_requests_total{route="ingest",status_class="2xx"}[5m])) / clamp_min(sum(rate(hermodr_http_requests_total{route="ingest"}[5m])), 0.000001)
+      - record: hermodr:ingest_5xx_rate:5m
+        expr: sum(rate(hermodr_http_requests_total{route="ingest",status_class="5xx"}[5m]))
+      - record: hermodr:ingest_latency_p95_seconds:5m
+        expr: histogram_quantile(0.95, sum by (le) (rate(hermodr_http_request_duration_seconds_bucket{route="ingest"}[5m])))
+  - name: hermodr-alerts
+    interval: 30s
+    rules:
+      - alert: HermodrMetricsUnavailable
+        expr: absent(hermodr_metrics_bridge_up) or hermodr_metrics_bridge_up != 1
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr durable metrics are unavailable"}
+      - alert: HermodrDurableIngestUnavailable
+        expr: up{job="odin-textfile"} != 1 or hermodr_database_integrity_status != 1
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr durable ingest is unavailable"}
+      - alert: HermodrIngestErrors
+        expr: hermodr:ingest_5xx_rate:5m > 0
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr is returning server errors"}
+      - alert: HermodrIngestLatency
+        expr: hermodr:ingest_latency_p95_seconds:5m > 0.5
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr ingest latency exceeds its objective"}
+      - alert: HermodrReportStale
+        expr: hermodr_worst_ingest_age_seconds > 21600
+        for: 15m
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr report freshness is degraded"}
+      - alert: HermodrDiskPressure
+        expr: hermodr_filesystem_free_bytes < 1073741824 or hermodr_database_size_bytes{file_kind="wal"} > 536870912
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr storage is under pressure"}
+      - alert: HermodrDatabaseIntegrity
+        expr: hermodr_database_integrity_status != 1
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr database integrity check failed"}
+      - alert: HermodrBackupStale
+        expr: time() - hermodr_backup_last_success_timestamp_seconds{stage="restore_test"} > 93600
+        for: 15m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr has no recent restore-tested backup"}
+      - alert: HermodrProcessorHeartbeatStale
+        expr: hermodr_processor_heartbeat_age_seconds > 120
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr processor sentinel heartbeat is stale"}

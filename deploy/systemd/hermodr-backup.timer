@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule encrypted Hermodr backup and restore test
+
+[Timer]
+OnCalendar=*-*-* 03:17:00
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

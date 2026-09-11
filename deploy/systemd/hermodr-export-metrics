@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+target=${HERMODR_METRICS_TARGET:-/var/lib/hermodr/metrics/hermodr.prom}
+temporary="${target}.tmp"
+trap 'rm -f "$temporary"' EXIT
+if /opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin metrics >"$temporary"; then
+    printf 'hermodr_metrics_bridge_up 1\n' >>"$temporary"
+else
+    printf 'hermodr_metrics_bridge_up 0\n' >"$temporary"
+fi
+chmod 0644 "$temporary"
+mv "$temporary" "$target"

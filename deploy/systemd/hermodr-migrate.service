@@ -1,0 +1,20 @@
+[Unit]
+Description=Hermodr database migration
+After=local-fs.target
+Before=hermodr-receiver.service hermodr-processor.service
+
+[Service]
+Type=oneshot
+User=hermodr
+Group=hermodr
+Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
+ExecStart=/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json migrate up
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/hermodr
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

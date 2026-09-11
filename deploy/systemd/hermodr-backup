@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+directory=/var/backups/hermodr
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+archive="${directory}/hermodr-${stamp}.tar.gpg"
+/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin backup-create --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
+/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin backup-verify --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
+/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin restore-test --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
+find "$directory" -type f -name 'hermodr-*.tar.gpg' -mtime +30 -delete

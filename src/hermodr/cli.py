@@ -5,11 +5,16 @@ import json
 from pathlib import Path
 import sqlite3
 import sys
+from threading import Event
+import signal
 
 from .build import BUILD
 from .config import ConfigurationError, load_configuration
 from .database import DatabaseError, connect, migrate, schema_version
 from .metrics import reconstruct_critical_metrics
+from .backup import BackupError, create_backup, verify_backup
+from .clock import SystemClock, unix_milliseconds
+from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
 
 
@@ -20,9 +25,12 @@ def parser() -> argparse.ArgumentParser:
     receiver = commands.add_parser("receiver")
     receiver.add_argument("--check", action="store_true")
     processor = commands.add_parser("processor")
-    processor.add_argument("--check", action="store_true", required=True)
+    processor.add_argument("--check", action="store_true")
+    processor.add_argument("--interval-seconds", type=float, default=30)
     admin = commands.add_parser("admin")
-    admin.add_argument("action", choices=("build-info", "metrics"))
+    admin.add_argument("action", choices=("build-info", "metrics", "backup-create", "backup-verify", "restore-test"))
+    admin.add_argument("--archive", type=Path)
+    admin.add_argument("--passphrase-file", type=Path)
     migration = commands.add_parser("migrate")
     migration.add_argument("action", choices=("up", "status"))
     return root
@@ -54,17 +62,43 @@ def run(arguments: list[str] | None = None) -> int:
                     ReceiverApplication(service).serve()
             elif args.command == "processor":
                 connection.execute("SELECT 1").fetchone()
-                _safe_result(command=args.command, config_fingerprint=configuration.fingerprint, status="ready")
+                if args.check:
+                    heartbeat(configuration)
+                    _safe_result(command=args.command, config_fingerprint=configuration.fingerprint, status="ready")
+                else:
+                    if args.interval_seconds <= 0:
+                        raise DatabaseError("processor_interval_invalid")
+                    stopped = Event()
+                    previous = {item: signal.signal(item, lambda _signum, _frame: stopped.set()) for item in (signal.SIGINT, signal.SIGTERM)}
+                    try:
+                        serve_processor(configuration, stopped, args.interval_seconds)
+                    finally:
+                        for item, handler in previous.items():
+                            signal.signal(item, handler)
             elif args.command == "admin" and args.action == "build-info":
                 _safe_result(**BUILD.labels())
             elif args.command == "admin" and args.action == "metrics":
-                sys.stdout.write(reconstruct_critical_metrics(connection, 0).render())
+                sys.stdout.write(reconstruct_critical_metrics(connection, unix_milliseconds(SystemClock().now())).render())
+            elif args.command == "admin":
+                if args.archive is None or args.passphrase_file is None:
+                    raise BackupError("backup_arguments_missing")
+                connection.close()
+                connection = None
+                if args.action == "backup-create":
+                    report = create_backup(configuration, args.archive, args.passphrase_file)
+                else:
+                    report = verify_backup(
+                        configuration, args.archive, args.passphrase_file,
+                        restore_test=args.action == "restore-test",
+                    )
+                _safe_result(**report.values())
             else:
                 _safe_result(schema_version=schema_version(connection), status="ok")
             return 0
         finally:
-            connection.close()
-    except (ConfigurationError, DatabaseError, ReceiverError) as exc:
+            if connection is not None:
+                connection.close()
+    except (BackupError, ConfigurationError, DatabaseError, ReceiverError) as exc:
         _safe_result(error=str(exc), status="error")
         return 2
     except (OSError, sqlite3.Error):
