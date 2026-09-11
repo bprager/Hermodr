@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  m0:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

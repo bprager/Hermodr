@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- M1 dependency-free reproducible wheel with `receiver`, `processor`, `admin`, and `migrate` command boundaries.
+- Versioned strict SQLite migration framework and multi-subject-ready initial schema with scoped repository APIs.
+- Canonical JSON Schemas and synthetic golden fixtures for observations, transitions, visits, trips, coverage gaps, places, and outbox envelopes.
+- Deterministic identifiers, canonical hashing, bounded domain enums, strict configuration loading, and build metadata.
+- Allowlist-only structured logging and metric facade with durable critical-gauge reconstruction.
+- M1 observability/reboot contract and automated validation evidence.
+- Enforced standard-library-only dependency and license inventory with external-import scanning.
 - Synthetic OwnTracks HTTP capture/replay harness covering supported message types, duplicates, ordering, body shapes, content types, empty publishes, and transient retry responses.
 - Standard-library test suite and CI with a strict greater-than-95-percent line coverage gate.
 - ADRs selecting Python, guarded SQLite, systemd, Basic-over-TLS authentication, and a single-object HTTP contract.
@@ -23,6 +30,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Completed the repository-executable M1 contracts foundation and advanced foundation backlog items HMD-005 through HMD-008 to Done.
+- Expanded CI to build the release artifact and validate migrations, canonical contracts, cross-subject isolation, and observable-output privacy.
 - Completed the repository-executable M0 decision spike and recorded remaining hardware and policy checks as explicit production gates.
 - Changed the provisional success response to OwnTracks-compatible `200 []` and documented zero-length publish handling.
 - Replaced the initial Go recommendation with Python 3.13 based on host evidence.

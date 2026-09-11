@@ -1,0 +1,7 @@
+{
+  "busy_timeout_ms": 5000,
+  "database_path": "./var/hermodr.sqlite",
+  "environment": "development",
+  "log_level": "INFO",
+  "operations_bind": "127.0.0.1"
+}

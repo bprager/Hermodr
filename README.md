@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol and deployment decision spike. Production service implementation has not started.
+The project has completed its protocol spike and repository/contracts foundation. Production ingestion and deployment have not started.
 
 ## Architecture
 
@@ -42,13 +42,16 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [Maintained backlog](docs/BACKLOG.md)
 - [Architecture decisions](docs/adr/)
 - [M0 protocol findings](docs/m0/OWNTRACKS_HTTP_FINDINGS.md)
+- [M1 validation evidence](docs/m1/VALIDATION.md)
+- [Observability and reboot contract](docs/m1/OBSERVABILITY.md)
+- [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Changelog](CHANGELOG.md)
 
 Detailed product documentation is access-controlled project material. Never commit real coordinates, credentials, device identifiers, addresses, or production payloads.
 
-## Planned commands
+## Commands
 
-The recommended release artifact will expose four commands:
+The reproducible wheel exposes one entry point with four command boundaries:
 
 ```text
 hermodr receiver
@@ -57,18 +60,29 @@ hermodr admin
 hermodr migrate
 ```
 
-Python 3.13 or newer is the selected implementation runtime. Production packaging is finalized during the repository-foundation milestone.
+Python 3.13 or newer is the selected implementation runtime. Receiver and processor currently provide fail-closed startup checks; their network and processing behavior begins in later milestones.
 
 ## Development
 
-The M0 protocol harness uses only the Python standard library and synthetic data:
+The repository uses only the Python standard library and synthetic data:
 
 ```shell
 make demo
 make check
+make artifact
 ```
 
-`make check` runs tests, static checks, Markdown and sensitive-pattern validation, and a strict line-coverage gate that fails at 95% or below.
+`make check` builds the artifact and runs unit, integration, contract, migration, isolation, observability, static, Markdown, and sensitive-pattern checks. Its line-coverage gate fails at 95% or below.
+
+A non-production configuration template is available at `config/hermodr.example.json`. Initialize a disposable database and check each process boundary with:
+
+```shell
+PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json migrate up
+PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json receiver --check
+PYTHONPATH=src:. python3 -m hermodr --config config/hermodr.example.json processor --check
+```
+
+Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 
 ## Delivery sequence
 

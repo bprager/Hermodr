@@ -1,0 +1,24 @@
+{
+  "$id": "urn:hermodr:contract:v1:transition",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "algorithm": {"minLength": 1, "type": "string"},
+    "algorithm_config_version": {"pattern": "^[a-f0-9]{16}$", "type": "string"},
+    "confidence": {"maximum": 1, "minimum": 0, "type": "number"},
+    "evidence_ids": {"items": {"pattern": "^obs_[a-f0-9]{32}$", "type": "string"}, "type": "array"},
+    "occurred_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
+    "privacy_class": {"const": "restricted", "type": "string"},
+    "processed_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
+    "schema_version": {"const": "1", "type": "string"},
+    "source_digest": {"pattern": "^[a-f0-9]{64}$", "type": "string"},
+    "status": {"enum": ["provisional", "confirmed", "superseded"], "type": "string"},
+    "subject_id": {"pattern": "^sub_[a-f0-9]{8,64}$", "type": "string"},
+    "superseded_by": {"type": ["string", "null"]},
+    "transition_id": {"pattern": "^trn_[a-f0-9]{32}$", "type": "string"},
+    "transition_type": {"enum": ["arrival", "departure"], "type": "string"}
+  },
+  "required": ["transition_id", "schema_version", "subject_id", "transition_type", "occurred_at", "processed_at", "confidence", "evidence_ids", "source_digest", "algorithm", "algorithm_config_version", "status", "superseded_by", "privacy_class"],
+  "title": "Hermodr transition v1",
+  "type": "object"
+}

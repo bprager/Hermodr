@@ -53,5 +53,5 @@ def main(arguments: Sequence[str]) -> int:
         covered += report_covered
         missed += report_missed
     percentage = enforce(covered, missed)
-    print(f"M0 line coverage: {percentage:.2f}% ({covered}/{covered + missed})")
+    print(f"Hermodr line coverage: {percentage:.2f}% ({covered}/{covered + missed})")
     return 0

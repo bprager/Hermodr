@@ -1,6 +1,6 @@
 # Hermóðr Implementation Plan
 
-**Status:** Ready for estimation after decision spike
+**Status:** Active; M0 and M1 are repository-complete
 **Companion design:** `docs/IMPLEMENTATION_DESIGN.md`
 
 ## 1. Delivery Approach
@@ -34,6 +34,8 @@ The plan uses these priority levels:
 
 **Goal:** create a testable artifact and stable boundaries.
 
+**Status:** Repository-complete on 2026-09-10. Production activation remains gated on the patched SQLite build and M2/M3 security and deployment work.
+
 - P0 Scaffold `receiver`, `processor`, `admin`, and `migrate` commands with shared configuration, logging, metrics, clock, and identifier packages.
 - P0 Add canonical JSON Schemas for observation, transition, visit, trip, coverage gap, place, and outbox envelope.
 - P0 Define bounded error, quality-flag, job-state, audit-action, and metric-label enums.
@@ -44,6 +46,8 @@ The plan uses these priority levels:
 - P0 Generate build metadata and `hermodr_build_info`.
 
 **Exit evidence:** clean CI; migration up from empty database; schema/fixture validation; application starts only with valid non-production config.
+
+**Evidence:** dependency-free reproducible wheel; migration 001; seven versioned contracts and synthetic fixtures; strict command startup checks; subject-isolation repository tests; allowlisted logs and metrics; durable critical-gauge reconstruction; `docs/m1/VALIDATION.md` and `docs/m1/OBSERVABILITY.md`.
 
 ### M2 — Secure durable receiver
 

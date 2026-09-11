@@ -20,10 +20,10 @@
 | HMD-002 | V1 | P0 | Done | Inventory gateway and application hosts for boot ordering, storage encryption, time sync, service identities, backup, and monitoring. | Host access | `docs/m0/HOST_INVENTORY.md`; inaccessible facts explicitly listed |
 | HMD-003 | V1 | P0 | Done | Decide implementation language, SQLite driver, deployment mode, authentication mode, and request body shape. | HMD-001, HMD-002 | ADRs 0001–0005 |
 | HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | `docs/m0/PRIVACY_RETENTION_CHECKLIST.md`; three approvals pending |
-| HMD-005 | V1 | P0 | Ready | Scaffold receiver, processor, admin, and migration commands. | HMD-003 | CI build and startup tests |
-| HMD-006 | V1 | P0 | Ready | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject unit tests |
-| HMD-007 | V1 | P0 | Ready | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | Golden contract suite |
-| HMD-008 | V1 | P0 | Ready | Build the allowlist-only logging and metric facade with sensitive-canary tests. | HMD-005 | Observable-output privacy report |
+| HMD-005 | V1 | P0 | Done | Scaffold receiver, processor, admin, and migration commands. | HMD-003 | Reproducible wheel; `docs/m1/VALIDATION.md` |
+| HMD-006 | V1 | P0 | Done | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject tests in `tests/test_m1_foundation.py` |
+| HMD-007 | V1 | P0 | Done | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | `contracts/v1`; synthetic golden contract suite |
+| HMD-008 | V1 | P0 | Done | Build the allowlist-only logging and metric facade with sensitive-canary tests. | HMD-005 | `docs/m1/OBSERVABILITY.md`; privacy tests |
 
 ## Next — Secure Collection and Operations
 

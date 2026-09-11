@@ -1,0 +1,24 @@
+{
+  "$id": "urn:hermodr:contract:v1:coverage-gap",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "algorithm": {"minLength": 1, "type": "string"},
+    "algorithm_config_version": {"pattern": "^[a-f0-9]{16}$", "type": "string"},
+    "ended_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
+    "evidence_ids": {"items": {"pattern": "^obs_[a-f0-9]{32}$", "type": "string"}, "type": "array"},
+    "gap_id": {"pattern": "^gap_[a-f0-9]{32}$", "type": "string"},
+    "privacy_class": {"const": "restricted", "type": "string"},
+    "processed_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
+    "reason": {"enum": ["silence", "accuracy", "ambiguity"], "type": "string"},
+    "schema_version": {"const": "1", "type": "string"},
+    "started_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
+    "source_digests": {"items": {"pattern": "^[a-f0-9]{64}$", "type": "string"}, "minItems": 1, "type": "array"},
+    "status": {"enum": ["provisional", "confirmed", "superseded"], "type": "string"},
+    "subject_id": {"pattern": "^sub_[a-f0-9]{8,64}$", "type": "string"},
+    "superseded_by": {"type": ["string", "null"]}
+  },
+  "required": ["gap_id", "schema_version", "subject_id", "started_at", "ended_at", "processed_at", "reason", "evidence_ids", "source_digests", "algorithm", "algorithm_config_version", "status", "superseded_by", "privacy_class"],
+  "title": "Hermodr coverage gap v1",
+  "type": "object"
+}

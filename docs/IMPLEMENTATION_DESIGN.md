@@ -1,6 +1,6 @@
 # Hermóðr Implementation Design
 
-**Status:** Proposed baseline
+**Status:** Implemented through M1; later milestone sections remain proposed
 **Source:** `docs/HERMODR_PRD.md`, version 1.1
 **Scope:** Version 1 through guarded outbox publication plus the immediately following two-subject version 2; the Napoleon importer is an external consumer
 
@@ -165,6 +165,7 @@ Every subject-owned table includes a non-null `subject_id` foreign key. Uniquene
 | `schema_migrations` | Applied migration ID, checksum, application time. |
 | `subjects` | Pseudonymous subject ID, lifecycle status, policy reference, enrollment/revocation timestamps, and minimal authorization record. No routine display name is required. |
 | `devices` | Device ID, subject ID, lifecycle status, credential scope, and enrollment/revocation timestamps. |
+| `credentials` | Subject/device-scoped key ID, indirect secret reference, and bounded validity interval. No secret value is stored in the schema. |
 | `raw_events` | Immutable envelope keyed by `ingest_id`; unique `idempotency_key`; digest, encrypted-or-restricted payload bytes, safe metadata, receipt time, source type, disposition. Update/delete denied in normal application path except retention/deletion workflow. |
 | `processing_jobs` | Subject-partitioned job; one active job per ingest/recompute window, with state, attempts, next attempt, lease owner/expiry, bounded error code, timestamps. |
 | `observations` | Deterministic `observation_id`, canonical fields, quality flags, raw provenance, schema and algorithm versions. Unique provenance/version constraint. |
@@ -180,6 +181,7 @@ Every subject-owned table includes a non-null `subject_id` foreign key. Uniquene
 | `audit_events` | Append-only actor, action, target type/opaque ID, reason, request/run ID, result, time and config/build fingerprint. |
 | `service_heartbeats` | Processor/storage maintenance timestamps used for operations checks. |
 | `retention_holds` | Subject-scoped records/time ranges temporarily excluded from expiration with reason. |
+| `operational_state` | Durable non-sensitive backup, restore, and integrity status used to reconstruct critical gauges after restart. |
 
 ### 6.2 SQLite settings and ownership
 
@@ -231,6 +233,8 @@ Canonical payloads should use versioned JSON Schema stored in the repository. Al
 - privacy classification.
 
 Outbox events use a common envelope with `event_id`, `sequence`, `event_type`, `schema_version`, `occurred_at`, `published_at`, `subject_id`, `privacy_class`, `provenance`, and `data`. Contract fixtures are tested against JSON Schema. A new incompatible shape requires a new schema version; changing derivation behavior requires an algorithm version even when schema is unchanged.
+
+M1 freezes version 1 schemas under `contracts/v1` and packages them in the release wheel. The dependency-free validator returns only a JSON path and bounded violation code; it does not echo rejected values.
 
 ## 8. Processing and Derivation
 

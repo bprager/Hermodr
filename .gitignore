@@ -222,3 +222,9 @@ __marimo__/
 
 # Project metadata (overrides any user-level global ignore rule)
 !pyproject.toml
+
+# Application source (overrides any user-level global ignore rule)
+!src/
+!src/**
+src/**/__pycache__/
+src/**/*.py[codz]
