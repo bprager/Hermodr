@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project documentation (overrides any user-level global ignore rule)
+!README.md
