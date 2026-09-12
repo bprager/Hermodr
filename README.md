@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol spike, contracts foundation, secure durable receiver, and synthetic-only M3 operational baseline. Real-device commissioning has not started.
+The project has completed its protocol spike, contracts foundation, secure durable receiver, operational baseline, deterministic processing, sensitive-data lifecycle, and guarded-outbox conformance. Real-device commissioning is the next milestone.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ HTTPS gateway -> receiver -> durable restricted store
                     separately authorized importer
 ```
 
-The receiver and processor are independent processes. The receiver acknowledges an event only after durable storage. In M3 the processor is a boot/recovery heartbeat sentinel; deterministic queue processing begins in M4. Direct graph-database writes are outside the service boundary.
+The receiver and processor are independent processes. The receiver acknowledges an event only after durable storage. The processor reclaims leases after restart, normalizes evidence, schedules bounded recomputation, and derives uncertainty-preserving records. Direct graph-database writes are outside the service boundary.
 
 ## Design priorities
 
@@ -49,6 +49,8 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [M3 operations baseline](docs/m3/OPERATIONS.md)
 - [M3 validation evidence](docs/m3/VALIDATION.md)
 - [M3 operator runbook](docs/runbooks/M3_OPERATIONS.md)
+- [M4–M7 validation evidence](docs/m7/VALIDATION.md)
+- [Processing and lifecycle runbook](docs/runbooks/M4_M7_OPERATIONS.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)
@@ -66,7 +68,7 @@ hermodr admin
 hermodr migrate
 ```
 
-Python 3.13 or newer is the selected implementation runtime. The receiver now serves authenticated ingestion plus separate private operations endpoints. The processor remains a fail-closed startup boundary until its processing milestone.
+Python 3.13 or newer is the selected implementation runtime. The receiver serves authenticated ingestion plus separate private operations endpoints. Administrative commands provide audited reprocessing, retention, deletion, audit-chain verification, backup, and metrics controls.
 
 ## Development
 
@@ -94,7 +96,7 @@ Receiver startup also requires schema migration 002, at least one active subject
 PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
 ```
 
-M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, verified notification delivery, encrypted backup verification, isolated restore testing, and full-path reboot proof. The deployment remains synthetic-only while the production-policy, off-host recovery, and real-device commissioning gates remain open.
+The deployment includes boot-enabled hardened units, gateway TLS controls, persistent metric collection, lifecycle and outbox alerting, verified notification delivery, encrypted backup verification, isolated restore testing, and full-path reboot proof. It remains synthetic-only while off-host recovery and real-device commissioning remain open.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

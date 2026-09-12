@@ -20,6 +20,7 @@ from .clock import unix_milliseconds
 from .config import Configuration
 from .database import connect, schema_version
 from .identifiers import canonical_json
+from .audit import AuditError, verify_chain
 
 
 class BackupError(RuntimeError):
@@ -32,6 +33,8 @@ TABLES = (
     "observations", "places", "transitions", "visits", "trips",
     "coverage_gaps", "record_evidence", "recompute_windows", "outbox_records",
     "quarantine", "audit_events", "service_heartbeats", "retention_holds",
+    "normalized_events", "retention_policies", "deletion_plans",
+    "outbox_consumers", "outbox_receipts",
 )
 
 
@@ -140,9 +143,11 @@ def create_backup(
             finally:
                 source.close()
             restored = sqlite3.connect(f"file:{snapshot}?mode=ro", uri=True)
+            restored.row_factory = sqlite3.Row
             try:
                 if restored.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise BackupError("backup_integrity_failed")
+                verify_chain(restored)
                 tables = _inventory(restored)
                 identifiers = _identifier_hashes(restored)
                 version = schema_version(restored)
@@ -220,9 +225,11 @@ def verify_backup(
             if digest != manifest.get("database_sha256"):
                 raise BackupError("backup_digest_mismatch")
             restored = sqlite3.connect(f"file:{snapshot}?mode=ro", uri=True)
+            restored.row_factory = sqlite3.Row
             try:
                 if restored.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                     raise BackupError("backup_integrity_failed")
+                verify_chain(restored)
                 tables = _inventory(restored)
                 identifiers = _identifier_hashes(restored)
                 version = schema_version(restored)
@@ -241,4 +248,6 @@ def verify_backup(
         _state(configuration, stage, False, now_ms)
         if isinstance(exc, BackupError):
             raise
+        if isinstance(exc, AuditError):
+            raise BackupError("backup_audit_chain_invalid") from exc
         raise BackupError("backup_verification_failed") from exc

@@ -19,7 +19,7 @@
 | HMD-001 | V1 | P0 | Done | Capture sanitized source-client payload and retry behavior for every supported message type. | Disposable test endpoint | `docs/m0/OWNTRACKS_HTTP_FINDINGS.md`; synthetic harness and fixtures |
 | HMD-002 | V1 | P0 | Done | Inventory gateway and application hosts for boot ordering, storage encryption, time sync, service identities, backup, and monitoring. | Host access | `docs/m0/HOST_INVENTORY.md`; inaccessible facts explicitly listed |
 | HMD-003 | V1 | P0 | Done | Decide implementation language, SQLite driver, deployment mode, authentication mode, and request body shape. | HMD-001, HMD-002 | ADRs 0001–0005 |
-| HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | `docs/m0/PRIVACY_RETENTION_CHECKLIST.md`; three approvals pending |
+| HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | Retention and route approved; off-host destination and key custodian remain pending in `docs/m0/PRIVACY_RETENTION_CHECKLIST.md` |
 | HMD-005 | V1 | P0 | Done | Scaffold receiver, processor, admin, and migration commands. | HMD-003 | Reproducible wheel; `docs/m1/VALIDATION.md` |
 | HMD-006 | V1 | P0 | Done | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject tests in `tests/test_m1_foundation.py` |
 | HMD-007 | V1 | P0 | Done | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | `contracts/v1`; synthetic golden contract suite |
@@ -45,13 +45,13 @@
 
 | ID | Release | Priority | Status | Work | Dependency | Acceptance evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| HMD-019 | V1 | P0 | Ready | Implement subject-partitioned leases, retries, dead-letter handling, heartbeat, and reboot reclamation. | HMD-006 | Crash/concurrency suite |
-| HMD-020 | V1 | P0 | Ready | Normalize every supported source type with provenance and algorithm/config versions. | HMD-007, HMD-019 | Golden fixture suite |
-| HMD-021 | V1 | P0 | Ready | Implement accuracy-aware place resolution and versioned place registry. | HMD-020 | Geospatial boundary suite |
-| HMD-022 | V1 | P0 | Ready | Specify and implement transitions, visits, trips, gaps, confidence, and ambiguity rules. | HMD-021 | Controlled-route scenarios |
-| HMD-023 | V1 | P0 | Ready | Implement bounded recomputation, deterministic convergence, and supersession. | HMD-022 | Shuffled/duplicate/late-event suite |
-| HMD-024 | V1 | P0 | Ready | Implement canonical append-only outbox and fake importer conformance tests. | HMD-020, HMD-023 | End-to-end importer report |
-| HMD-025 | V1 | P0 | Ready | Implement subject-policy retention, evidence holds, audited two-step deletion, and outbox tombstones. | HMD-024 | Retention/deletion report |
+| HMD-019 | V1 | P0 | Done | Implement subject-partitioned leases, retries, dead-letter handling, heartbeat, and reboot reclamation. | HMD-006 | `docs/m7/VALIDATION.md`; crash/concurrency suite |
+| HMD-020 | V1 | P0 | Done | Normalize every supported source type with provenance and algorithm/config versions. | HMD-007, HMD-019 | `docs/m7/VALIDATION.md`; golden fixture suite |
+| HMD-021 | V1 | P0 | Done | Implement accuracy-aware place resolution and versioned place registry. | HMD-020 | `docs/m7/VALIDATION.md`; geospatial boundary suite |
+| HMD-022 | V1 | P0 | Done | Specify and implement transitions, visits, trips, gaps, confidence, and ambiguity rules. | HMD-021 | `docs/m7/VALIDATION.md`; controlled-route scenarios |
+| HMD-023 | V1 | P0 | Done | Implement bounded recomputation, deterministic convergence, and supersession. | HMD-022 | `docs/m7/VALIDATION.md`; late-event and algorithm-change suite |
+| HMD-024 | V1 | P0 | Done | Implement canonical append-only outbox and fake importer conformance tests. | HMD-020, HMD-023 | `docs/m7/VALIDATION.md`; importer conformance report |
+| HMD-025 | V1 | P0 | Done | Implement subject-policy retention, evidence holds, audited two-step deletion, and outbox tombstones. | HMD-024 | `docs/m7/VALIDATION.md`; retention/deletion report |
 | HMD-026 | V1 | P0 | Ready | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | Signed acceptance checklist |
 
 ## Immediate Follow-on — Two-Subject Version 2

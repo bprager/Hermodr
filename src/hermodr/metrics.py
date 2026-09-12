@@ -38,8 +38,14 @@ DEFINITIONS = {
     "hermodr_filesystem_free_bytes": MetricDefinition("gauge", ()),
     "hermodr_processing_jobs": MetricDefinition("gauge", ("state",)),
     "hermodr_processing_oldest_pending_age_seconds": MetricDefinition("gauge", ()),
+    "hermodr_processing_oldest_failed_age_seconds": MetricDefinition("gauge", ()),
+    "hermodr_processing_attempts_total": MetricDefinition("gauge", ()),
     "hermodr_quarantine_events": MetricDefinition("gauge", ("reason",)),
     "hermodr_outbox_sequence": MetricDefinition("gauge", ()),
+    "hermodr_outbox_checkpoint_lag": MetricDefinition("gauge", ()),
+    "hermodr_recompute_windows": MetricDefinition("gauge", ()),
+    "hermodr_retention_overdue_records": MetricDefinition("gauge", ()),
+    "hermodr_deletion_plans": MetricDefinition("gauge", ()),
     "hermodr_reporting_subjects": MetricDefinition("gauge", ("state",)),
     "hermodr_worst_ingest_age_seconds": MetricDefinition("gauge", ()),
     "hermodr_worst_capture_age_seconds": MetricDefinition("gauge", ()),
@@ -164,8 +170,25 @@ def reconstruct_critical_metrics(connection: sqlite3.Connection, now_ms: int) ->
         registry.set("hermodr_processing_jobs", count, state=state.value)
     oldest = connection.execute("SELECT MIN(created_at_ms) FROM processing_jobs WHERE state = 'pending'").fetchone()[0]
     registry.set("hermodr_processing_oldest_pending_age_seconds", 0 if oldest is None else max(0, now_ms - oldest) / 1000)
+    oldest_failed = connection.execute("SELECT MIN(updated_at_ms) FROM processing_jobs WHERE state = 'failed'").fetchone()[0]
+    registry.set("hermodr_processing_oldest_failed_age_seconds", 0 if oldest_failed is None else max(0, now_ms - oldest_failed) / 1000)
+    attempts = connection.execute("SELECT COALESCE(SUM(attempts), 0) FROM processing_jobs").fetchone()[0]
+    registry.set("hermodr_processing_attempts_total", attempts)
     sequence = connection.execute("SELECT COALESCE(MAX(sequence), 0) FROM outbox_records").fetchone()[0]
     registry.set("hermodr_outbox_sequence", sequence)
+    checkpoint = connection.execute("SELECT MIN(last_sequence) FROM outbox_consumers").fetchone()[0]
+    registry.set("hermodr_outbox_checkpoint_lag", 0 if checkpoint is None else max(0, sequence - checkpoint))
+    recompute = connection.execute("SELECT COUNT(*) FROM recompute_windows WHERE state IN ('pending','failed')").fetchone()[0]
+    registry.set("hermodr_recompute_windows", recompute)
+    overdue = connection.execute(
+        """SELECT COUNT(*) FROM raw_events r JOIN retention_policies p USING(subject_id)
+           WHERE r.payload_expired_at_ms IS NULL
+             AND COALESCE(r.captured_at_ms,r.received_at_ms) < ? - p.raw_days * 86400000""",
+        (now_ms,),
+    ).fetchone()[0]
+    registry.set("hermodr_retention_overdue_records", overdue)
+    plans = connection.execute("SELECT COUNT(*) FROM deletion_plans WHERE status='planned'").fetchone()[0]
+    registry.set("hermodr_deletion_plans", plans)
     active = connection.execute("SELECT COUNT(*) FROM subjects WHERE status = 'active'").fetchone()[0]
     disabled = connection.execute("SELECT COUNT(*) FROM subjects WHERE status != 'active'").fetchone()[0]
     registry.set("hermodr_reporting_subjects", active, state="unknown")

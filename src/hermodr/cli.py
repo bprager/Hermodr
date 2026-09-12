@@ -13,10 +13,14 @@ from .config import ConfigurationError, load_configuration
 from .database import DatabaseError, connect, migrate, schema_version
 from .metrics import reconstruct_critical_metrics
 from .backup import BackupError, create_backup, verify_backup
-from .audit import ANNOTATION_ACTIONS, AuditError, record_change
+from .audit import ANNOTATION_ACTIONS, AuditError, record_change, verify_chain
 from .clock import SystemClock, unix_milliseconds
 from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
+from .derivation import DerivationError, preview_subject, reprocess_subject
+from .lifecycle import (
+    LifecycleError, apply_deletion, apply_retention, approve_default_policy, plan_deletion,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -29,13 +33,23 @@ def parser() -> argparse.ArgumentParser:
     processor.add_argument("--check", action="store_true")
     processor.add_argument("--interval-seconds", type=float, default=30)
     admin = commands.add_parser("admin")
-    admin.add_argument("action", choices=("build-info", "metrics", "audit-change", "backup-create", "backup-verify", "restore-test"))
+    admin.add_argument("action", choices=(
+        "build-info", "metrics", "audit-change", "audit-verify", "backup-create",
+        "backup-verify", "restore-test", "reprocess-preview", "reprocess-apply",
+        "retention-approve", "retention-apply", "deletion-plan", "deletion-apply",
+    ))
     admin.add_argument("--archive", type=Path)
     admin.add_argument("--passphrase-file", type=Path)
     admin.add_argument("--audit-action", choices=sorted(ANNOTATION_ACTIONS))
     admin.add_argument("--target-id")
     admin.add_argument("--reason-code")
     admin.add_argument("--run-id")
+    admin.add_argument("--subject-id")
+    admin.add_argument("--start-ms", type=int)
+    admin.add_argument("--end-ms", type=int)
+    admin.add_argument("--plan-id")
+    admin.add_argument("--now-ms", type=int)
+    admin.add_argument("--batch-size", type=int, default=100)
     migration = commands.add_parser("migrate")
     migration.add_argument("action", choices=("up", "status"))
     return root
@@ -84,6 +98,8 @@ def run(arguments: list[str] | None = None) -> int:
                 _safe_result(**BUILD.labels())
             elif args.command == "admin" and args.action == "metrics":
                 sys.stdout.write(reconstruct_critical_metrics(connection, unix_milliseconds(SystemClock().now())).render())
+            elif args.command == "admin" and args.action == "audit-verify":
+                _safe_result(entries=verify_chain(connection), status="ok")
             elif args.command == "admin" and args.action == "audit-change":
                 if None in (args.audit_action, args.target_id, args.reason_code, args.run_id):
                     raise AuditError("audit_arguments_missing")
@@ -92,6 +108,48 @@ def run(arguments: list[str] | None = None) -> int:
                     args.reason_code, args.run_id,
                 )
                 _safe_result(action=args.audit_action, audit_id=audit_id, status="ok")
+            elif args.command == "admin" and args.action in {"reprocess-preview", "reprocess-apply"}:
+                if None in (args.subject_id, args.reason_code, args.run_id):
+                    raise DerivationError("reprocess_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                if args.action == "reprocess-preview":
+                    report = preview_subject(connection, configuration, args.subject_id, now_ms)
+                else:
+                    report = reprocess_subject(connection, configuration, args.subject_id, now_ms)
+                record_change(
+                    connection, configuration, "reprocess", args.subject_id,
+                    args.reason_code, args.run_id, subject_id=args.subject_id,
+                )
+                _safe_result(**report.__dict__, mode=args.action.rsplit("-", 1)[1], status="ok")
+            elif args.command == "admin" and args.action == "retention-approve":
+                if None in (args.subject_id, args.run_id):
+                    raise LifecycleError("retention_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                approve_default_policy(connection, configuration, args.subject_id, now_ms, args.run_id)
+                _safe_result(policy_version="v1", status="ok")
+            elif args.command == "admin" and args.action == "retention-apply":
+                if None in (args.subject_id, args.run_id):
+                    raise LifecycleError("retention_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                report = apply_retention(
+                    connection, configuration, args.subject_id, now_ms, args.run_id, args.batch_size,
+                )
+                _safe_result(**report, status="ok")
+            elif args.command == "admin" and args.action == "deletion-plan":
+                if None in (args.subject_id, args.start_ms, args.end_ms, args.run_id):
+                    raise LifecycleError("deletion_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                plan_id, counts = plan_deletion(
+                    connection, configuration, args.subject_id, args.start_ms, args.end_ms,
+                    now_ms, args.run_id,
+                )
+                _safe_result(counts=counts, plan_id=plan_id, status="planned")
+            elif args.command == "admin" and args.action == "deletion-apply":
+                if None in (args.plan_id, args.run_id):
+                    raise LifecycleError("deletion_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                report = apply_deletion(connection, configuration, args.plan_id, now_ms, args.run_id)
+                _safe_result(counts=report, plan_id=args.plan_id, status="applied")
             elif args.command == "admin":
                 if args.archive is None or args.passphrase_file is None:
                     raise BackupError("backup_arguments_missing")
@@ -111,7 +169,10 @@ def run(arguments: list[str] | None = None) -> int:
         finally:
             if connection is not None:
                 connection.close()
-    except (AuditError, BackupError, ConfigurationError, DatabaseError, ReceiverError) as exc:
+    except (
+        AuditError, BackupError, ConfigurationError, DatabaseError, DerivationError,
+        LifecycleError, ReceiverError,
+    ) as exc:
         _safe_result(error=str(exc), status="error")
         return 2
     except (OSError, sqlite3.Error):

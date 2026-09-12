@@ -64,7 +64,7 @@ class BackupTests(OperationsTestCase):
             now=datetime(2030, 1, 1, tzinfo=timezone.utc), runner=self.copy_runner,
         )
         self.assertEqual(report.status, "ok")
-        self.assertEqual(report.schema_version, 2)
+        self.assertEqual(report.schema_version, 6)
         self.assertEqual(report.tables["subjects"], 1)
         self.assertEqual(archive.stat().st_mode & 0o777, 0o600)
         verified = verify_backup(self.configuration, archive, self.passphrase, runner=self.copy_runner)
@@ -218,7 +218,9 @@ class DeploymentArtifactTests(unittest.TestCase):
         for alert in (
             "HermodrDurableIngestUnavailable", "HermodrIngestErrors", "HermodrIngestLatency",
             "HermodrDatabaseErrors", "HermodrReportStale", "HermodrDiskPressure",
-            "HermodrDatabaseIntegrity", "HermodrBackupStale",
+            "HermodrDatabaseIntegrity", "HermodrBackupStale", "HermodrProcessorBacklog",
+            "HermodrDeadLetters", "HermodrRecomputeBacklog", "HermodrRetentionOverdue",
+            "HermodrOutboxConsumerLag",
         ):
             self.assertIn(alert, rules)
         exporter = (ROOT / "deploy/systemd/hermodr-export-metrics").read_text(encoding="utf-8")

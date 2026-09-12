@@ -1,5 +1,5 @@
 [Unit]
-Description=Hermodr processor boot sentinel
+Description=Hermodr durable processing worker
 After=hermodr-migrate.service
 Requires=hermodr-migrate.service
 StartLimitIntervalSec=300
@@ -10,7 +10,7 @@ Type=simple
 User=hermodr
 Group=hermodr
 Environment=LD_PRELOAD=/opt/hermodr/sqlite/lib/libsqlite3.so.0
-ExecStart=/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json processor --interval-seconds 30
+ExecStart=/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json processor --interval-seconds 1
 Restart=on-failure
 RestartSec=10
 NoNewPrivileges=true

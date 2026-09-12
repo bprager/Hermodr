@@ -10,6 +10,15 @@
   "max_future_seconds": 300,
   "operations_bind": "127.0.0.1",
   "operations_port": 8081,
+  "coverage_gap_ms": 21600000,
+  "processor_base_backoff_ms": 1000,
+  "processor_lease_ms": 60000,
+  "processor_max_attempts": 5,
+  "processor_max_backoff_ms": 300000,
+  "poor_accuracy_m": 100,
+  "implausible_speed_mps": 100,
+  "late_after_ms": 21600000,
   "public_bind": "127.0.0.1",
-  "public_port": 8080
+  "public_port": 8080,
+  "visit_dwell_ms": 600000
 }

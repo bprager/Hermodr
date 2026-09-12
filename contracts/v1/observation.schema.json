@@ -19,7 +19,7 @@
     "schema_version": {"const": "1", "type": "string"},
     "source": {"const": "owntracks", "type": "string"},
     "source_digest": {"pattern": "^[a-f0-9]{64}$", "type": "string"},
-    "source_type": {"enum": ["location", "transition"], "type": "string"},
+    "source_type": {"enum": ["location", "transition", "waypoint"], "type": "string"},
     "subject_id": {"pattern": "^sub_[a-f0-9]{8,64}$", "type": "string"}
   },
   "required": ["observation_id", "schema_version", "subject_id", "device_id", "source", "source_type", "captured_at", "received_at", "processed_at", "latitude", "longitude", "horizontal_accuracy_m", "quality_flags", "ingest_id", "source_digest", "algorithm", "algorithm_config_version", "privacy_class"],

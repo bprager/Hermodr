@@ -106,6 +106,8 @@ The plan uses these priority levels:
 
 **Exit evidence:** every supported fixture normalizes deterministically; forced crashes/retries create no duplicate canonical effects; processor never attempts a Memgraph connection.
 
+**Evidence:** transactional worker and source-adapter suite; reboot-persistent recompute state; processor systemd network restriction; `docs/m7/VALIDATION.md`.
+
 ### M5 — Event-time derivation and reprocessing
 
 **Goal:** produce uncertainty-preserving places, transitions, visits, trips, and gaps.
@@ -121,6 +123,8 @@ The plan uses these priority levels:
 
 **Exit evidence:** controlled route produces expected visits and coverage gaps; shuffled/duplicated delivery produces identical active state; algorithm-version change preserves and supersedes provenance correctly.
 
+**Evidence:** controlled-route, ambiguity, source-transition, late-event, subject-isolation, and algorithm-change tests in `tests/test_m5_m7_lifecycle.py`; `docs/m7/VALIDATION.md`.
+
 ### M6 — Retention, deletion, and operational completion
 
 **Goal:** close the sensitive-data lifecycle.
@@ -135,6 +139,8 @@ The plan uses these priority levels:
 
 **Exit evidence:** dry-run counts match applied deletion, restricted payloads are absent afterward, tombstones are idempotent, held evidence is preserved, and every action is auditable without retaining deleted location facts.
 
+**Evidence:** retention-hold, stale-plan, exact-count, payload-removal, tombstone, and audit-tamper tests; backup audit-chain verification; `docs/runbooks/M4_M7_OPERATIONS.md`.
+
 ### M7 — Guarded outbox integration
 
 **Goal:** prove the boundary to Napoleon without coupling Hermóðr to Memgraph.
@@ -147,6 +153,8 @@ The plan uses these priority levels:
 - P1 Hand the contract to the separately owned Napoleon importer project.
 
 **Exit evidence:** end-to-end synthetic ingest reaches fake approved projection exactly once; forbidden projection is rejected; Hermóðr runtime has no Memgraph dependency or credential.
+
+**Evidence:** versioned envelope validation, durable checkpoint/receipt replay suite, forbidden-type and unapproved-place policy, idempotent tombstone test, and graph-client-free fake importer; `docs/m7/VALIDATION.md`.
 
 ### M8 — Real-device commissioning and production gate
 

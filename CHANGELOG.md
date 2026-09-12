@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- Transactional subject-partitioned processing with durable leases, reboot reclamation, bounded retry/dead-letter handling, deterministic normalization, quality flags, and canonical outbox publication.
+- Accuracy-aware versioned places plus deterministic event-time visits, transitions, trips, coverage gaps, recomputation, source-transition reconciliation, and supersession events.
+- Approved default retention controls, explicit evidence holds, count-checked two-step deletion, idempotent tombstones, and audit-chain verification during backup and restore checks.
+- Guarded outbox consumer checkpoints, receipts, compatibility validation, forbidden-projection rejection, replay tests, and a graph-client-free fake importer.
+- Reconstructed recomputation, retention-overdue, deletion-plan, and outbox-checkpoint metrics with dashboard panels and alert rules.
+- Audited administrative commands and processing/lifecycle runbooks for reprocessing, retention, deletion, and audit verification.
+
 - Synthetic-only M3 deployment with hardened boot-enabled migration, receiver, processor-sentinel, metric-export, and encrypted-backup units and persistent timers.
 - Restricted TLS gateway route with method/body/time/rate limits, sanitized access logging, peer filtering, and private-route denial tests.
 - Persistent Prometheus collection with 13 recording/alert rules and a four-row Grafana operations dashboard plus notification bridge rules.
@@ -45,6 +52,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 - Persistent critical-monitoring design with state-derived metric reconstruction after restart.
 
 ### Changed
+
+- Advanced the database schema to version 6 for normalized evidence, derivation metadata, retention policies, deletion plans, consumer receipts, payload expiration, and reboot-persistent recompute windows.
+- Made the boot-enabled processor drain durable work and recomputation instead of serving only as a heartbeat sentinel.
+- Recorded approval of the version 1 retention defaults and previously validated public ingestion route; off-host backup destination and recovery-key custody remain external production gates.
 
 - Completed the synthetic-only M3 operational baseline after certificate-verified Grafana delivery through a boot-enabled local relay received upstream SMTP acceptance with an empty queue.
 - Made SMTP configuration durable in the encrypted source of truth, tightened live secret-file permissions, and pinned the local relay certificate into the Grafana trust store without disabling verification.

@@ -5,7 +5,7 @@
   "properties": {
     "data": {"type": "object"},
     "event_id": {"pattern": "^evt_[a-f0-9]{32}$", "type": "string"},
-    "event_type": {"enum": ["observation.recorded", "transition.recorded", "visit.recorded", "trip.recorded", "coverage_gap.recorded", "place.recorded", "record.tombstoned"], "type": "string"},
+    "event_type": {"enum": ["observation.recorded", "transition.recorded", "visit.recorded", "trip.recorded", "coverage_gap.recorded", "place.recorded", "record.superseded", "record.tombstoned"], "type": "string"},
     "occurred_at": {"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$", "type": "string"},
     "privacy_class": {"const": "restricted", "type": "string"},
     "provenance": {"items": {"pattern": "^[a-z]+_[a-f0-9]{20,64}$", "type": "string"}, "type": "array"},

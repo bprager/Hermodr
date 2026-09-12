@@ -60,4 +60,29 @@ groups:
         expr: hermodr_processor_heartbeat_age_seconds > 120
         for: 2m
         labels: {severity: critical}
-        annotations: {summary: "Hermodr processor sentinel heartbeat is stale"}
+        annotations: {summary: "Hermodr processor heartbeat is stale"}
+      - alert: HermodrProcessorBacklog
+        expr: hermodr_processing_oldest_pending_age_seconds > 300
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr processing backlog is not draining"}
+      - alert: HermodrDeadLetters
+        expr: hermodr_processing_jobs{state="failed"} > 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: "Hermodr has failed processing jobs"}
+      - alert: HermodrRecomputeBacklog
+        expr: hermodr_recompute_windows > 0
+        for: 15m
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr derivation recomputation is pending or failed"}
+      - alert: HermodrRetentionOverdue
+        expr: hermodr_retention_overdue_records > 0
+        for: 1h
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr sensitive payload retention is overdue"}
+      - alert: HermodrOutboxConsumerLag
+        expr: hermodr_outbox_checkpoint_lag > 1000
+        for: 15m
+        labels: {severity: warning}
+        annotations: {summary: "Hermodr outbox consumer checkpoint is behind"}

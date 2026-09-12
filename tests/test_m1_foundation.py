@@ -179,7 +179,7 @@ class IdentifierAndBuildTests(unittest.TestCase):
                 "from hermodr.database import available_migrations; "
                 "from hermodr import BUILD; "
                 "assert load_schema('observation')['type'] == 'object'; "
-                "assert len(available_migrations()) == 2; "
+                "assert len(available_migrations()) == 6; "
                 "assert BUILD.version == '0.1.0.dev0'"
             )
             completed = subprocess.run([sys.executable, "-I", "-c", command, str(Path(output) / name)], check=False)
@@ -236,7 +236,7 @@ class DatabaseAndRepositoryTests(FoundationTestCase):
     def test_empty_database_migrates_idempotently_with_expected_schema(self):
         configuration = load_configuration(self.config_path)
         with migrated_database(configuration) as connection:
-            self.assertEqual(schema_version(connection), 2)
+            self.assertEqual(schema_version(connection), 6)
             self.assertEqual(migrate(connection), ())
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
             expected = {"subjects", "devices", "credentials", "raw_events", "processing_jobs", "observations", "places", "transitions", "visits", "trips", "coverage_gaps", "record_evidence", "recompute_windows", "outbox_records", "quarantine", "audit_events", "service_heartbeats", "retention_holds", "operational_state", "schema_migrations"}
@@ -310,7 +310,15 @@ class DatabaseAndRepositoryTests(FoundationTestCase):
         with self.assertRaises(sqlite3.IntegrityError):
             repository.add_raw_event(subject_id=second.subject_id, device_id="dev_00000000", ingest_id="ing_11111111111111111111", idempotency_key="1" * 64, source_digest="1" * 64, payload=b"{}", received_at_ms=2000, captured_at_ms=None, source_type="status")
         with self.assertRaises(sqlite3.IntegrityError):
-            connection.execute("INSERT INTO observations VALUES ('sub_00000000','obs_bad','dev_00000000','ing_00000000000000000000','1','1',1,1,91.0,0.0,1.0,'[]',?)", ("0" * 64,))
+            connection.execute(
+                """INSERT INTO observations(
+                       subject_id, observation_id, device_id, ingest_id, schema_version,
+                       algorithm_version, captured_at_ms, received_at_ms, latitude,
+                       longitude, horizontal_accuracy_m, quality_flags_json, source_digest
+                   ) VALUES ('sub_00000000','obs_bad','dev_00000000',
+                             'ing_00000000000000000000','1','1',1,1,91.0,0.0,1.0,'[]',?)""",
+                ("0" * 64,),
+            )
         connection.close()
 
 
@@ -379,6 +387,10 @@ class ObservabilityTests(FoundationTestCase):
         self.assertIn('hermodr_quarantine_events{reason="contract_invalid"} 1', rendered)
         self.assertIn('hermodr_backup_status{stage="verify"} 1', rendered)
         self.assertIn("hermodr_sqlite_build_info", rendered)
+        self.assertIn("hermodr_recompute_windows 0", rendered)
+        self.assertIn("hermodr_retention_overdue_records 0", rendered)
+        self.assertIn("hermodr_deletion_plans 0", rendered)
+        self.assertIn("hermodr_outbox_checkpoint_lag 0", rendered)
         connection.close()
         connection_path = self.database_path
         self.database_path = self.root / "empty" / "hermodr.sqlite"
@@ -400,7 +412,7 @@ class CommandTests(FoundationTestCase):
     def test_migrate_and_all_command_scaffolds(self):
         result, output = self.invoke("migrate", "up")
         self.assertEqual(result, 0)
-        self.assertEqual(json.loads(output)["applied"], [1, 2])
+        self.assertEqual(json.loads(output)["applied"], [1, 2, 3, 4, 5, 6])
         for arguments in (("processor", "--check"), ("migrate", "status"), ("admin", "build-info"), ("admin", "metrics")):
             with self.subTest(arguments=arguments):
                 result, output = self.invoke(*arguments)
