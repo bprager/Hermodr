@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- A privacy-safe M8 commissioning preflight command, dedicated iPhone OwnTracks configuration guide, and explicit version 1 evidence/sign-off record.
 - Audited credential staging and revocation commands that validate protected secret files and refuse to revoke a subject's final usable credential.
 - Atomic encrypted-backup replication to the approved RAID-5-backed `saga` destination, followed by verification and isolated restoration of the off-host copy.
 - A Hermóðr-specific SOPS/age-encrypted backup-passphrase recovery artifact and custodian runbook; only ciphertext and its public recipient are committed.

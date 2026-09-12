@@ -14,7 +14,9 @@ from unittest.mock import patch
 from hermodr.backup import BackupError, TABLES, _protected_file, create_backup, verify_backup
 from hermodr.audit import AuditError, record_change
 from hermodr.cli import run
-from hermodr.commissioning import CommissioningError, revoke_credential, stage_credential
+from hermodr.commissioning import (
+    CommissioningError, commissioning_preflight, revoke_credential, stage_credential,
+)
 from hermodr.config import Configuration
 from hermodr.database import connect, migrate
 from hermodr.metrics import reconstruct_critical_metrics
@@ -137,6 +139,53 @@ class BackupTests(OperationsTestCase):
 
 
 class ProcessorAndCliTests(OperationsTestCase):
+    def test_privacy_safe_commissioning_preflight(self):
+        connection = connect(self.configuration)
+        try:
+            not_ready = commissioning_preflight(connection, 5)
+            self.assertFalse(not_ready.ready)
+            self.assertIn("retention_policy_missing", not_ready.issues)
+            self.assertIn("backup_restore_test_missing", not_ready.issues)
+            connection.execute(
+                "INSERT INTO retention_policies VALUES (?,?,?,?,?,?,?)",
+                ("sub_synthetic", 30, 90, None, 14, 5, "v1"),
+            )
+            for stage in ("create", "verify", "restore_test"):
+                connection.execute(
+                    "INSERT INTO operational_state VALUES (?,?,?)",
+                    (f"backup_{stage}_status", 1, 5),
+                )
+            connection.commit()
+            ready = commissioning_preflight(connection, 5)
+        finally:
+            connection.close()
+        self.assertTrue(ready.ready)
+        self.assertEqual(ready.issues, ())
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(run([
+                "--config", str(self.config_path), "admin", "commissioning-preflight", "--now-ms", "5",
+            ]), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["status"], "ready")
+        rendered = output.getvalue()
+        for sensitive in ("sub_synthetic", "dev_synthetic", "key_first", str(self.first_secret)):
+            self.assertNotIn(sensitive, rendered)
+
+    def test_commissioning_preflight_detects_invalid_protected_secret(self):
+        self.first_secret.chmod(0o644)
+        connection = connect(self.configuration)
+        try:
+            report = commissioning_preflight(connection, 5)
+            with self.assertRaisesRegex(CommissioningError, "commissioning_time_invalid"):
+                commissioning_preflight(connection, -1)
+        finally:
+            connection.close()
+        self.assertFalse(report.ready)
+        self.assertEqual(report.usable_credentials, 1)
+        self.assertEqual(report.protected_credentials, 0)
+        self.assertIn("protected_credential_invalid", report.issues)
+
     def test_audited_credential_rotation_and_last_credential_guard(self):
         second_secret = self.root / "second.secret"
         second_secret.write_bytes(b"second-synthetic-secret-value")

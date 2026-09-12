@@ -15,7 +15,7 @@ from .metrics import reconstruct_critical_metrics
 from .backup import BackupError, create_backup, verify_backup
 from .audit import ANNOTATION_ACTIONS, AuditError, record_change, verify_chain
 from .clock import SystemClock, unix_milliseconds
-from .commissioning import CommissioningError, revoke_credential, stage_credential
+from .commissioning import CommissioningError, commissioning_preflight, revoke_credential, stage_credential
 from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
 from .derivation import DerivationError, preview_subject, reprocess_subject
@@ -38,7 +38,7 @@ def parser() -> argparse.ArgumentParser:
         "build-info", "metrics", "audit-change", "audit-verify", "backup-create",
         "backup-verify", "restore-test", "reprocess-preview", "reprocess-apply",
         "retention-approve", "retention-apply", "deletion-plan", "deletion-apply",
-        "credential-stage", "credential-revoke",
+        "commissioning-preflight", "credential-stage", "credential-revoke",
     ))
     admin.add_argument("--archive", type=Path)
     admin.add_argument("--passphrase-file", type=Path)
@@ -105,6 +105,10 @@ def run(arguments: list[str] | None = None) -> int:
                 _safe_result(**BUILD.labels())
             elif args.command == "admin" and args.action == "metrics":
                 sys.stdout.write(reconstruct_critical_metrics(connection, unix_milliseconds(SystemClock().now())).render())
+            elif args.command == "admin" and args.action == "commissioning-preflight":
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                report = commissioning_preflight(connection, now_ms)
+                _safe_result(**report.__dict__, status="ready" if report.ready else "action_required")
             elif args.command == "admin" and args.action == "audit-verify":
                 _safe_result(entries=verify_chain(connection), status="ok")
             elif args.command == "admin" and args.action == "audit-change":

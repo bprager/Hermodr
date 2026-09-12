@@ -1,9 +1,10 @@
-"""Audited credential controls used during real-device commissioning."""
+"""Privacy-safe preflight and audited controls for device commissioning."""
 
+from dataclasses import dataclass
 from pathlib import Path
 import sqlite3
 
-from .audit import SAFE_CODE, record_change
+from .audit import SAFE_CODE, AuditError, record_change, verify_chain
 from .config import Configuration
 from .receiver import ReceiverError, load_protected_secret
 from .repository import Repository
@@ -11,6 +12,114 @@ from .repository import Repository
 
 class CommissioningError(RuntimeError):
     """A bounded commissioning failure safe to expose to an operator."""
+
+
+@dataclass(frozen=True)
+class CommissioningPreflight:
+    """Aggregate readiness evidence which contains no authority identifiers."""
+
+    active_subjects: int
+    active_devices: int
+    configured_device_identities: int
+    approved_retention_policies: int
+    usable_credentials: int
+    protected_credentials: int
+    blocking_jobs: int
+    blocking_recompute_windows: int
+    pending_quarantine: int
+    audit_entries: int
+    database_integrity: bool
+    audit_integrity: bool
+    backup_create: bool
+    backup_verify: bool
+    backup_restore_test: bool
+    issues: tuple[str, ...]
+    ready: bool
+
+
+def commissioning_preflight(connection: sqlite3.Connection, now_ms: int) -> CommissioningPreflight:
+    """Assess repository-controlled M8 gates without exposing sensitive values."""
+    if now_ms < 0:
+        raise CommissioningError("commissioning_time_invalid")
+    database_integrity = connection.execute("PRAGMA quick_check").fetchone()[0] == "ok"
+    try:
+        audit_entries = verify_chain(connection)
+        audit_integrity = True
+    except AuditError:
+        audit_entries = 0
+        audit_integrity = False
+    active_subjects = connection.execute(
+        "SELECT COUNT(*) FROM subjects WHERE status='active'"
+    ).fetchone()[0]
+    active_devices, configured_device_identities = connection.execute(
+        """SELECT COUNT(*), COUNT(d.source_tid)
+           FROM devices d JOIN subjects s USING(subject_id)
+           WHERE d.status='active' AND s.status='active'"""
+    ).fetchone()
+    approved_retention_policies = connection.execute(
+        """SELECT COUNT(*) FROM retention_policies p JOIN subjects s USING(subject_id)
+           WHERE s.status='active'"""
+    ).fetchone()[0]
+    credentials = Repository(connection).usable_credentials(now_ms)
+    protected_credentials = 0
+    for credential, _source_tid in credentials:
+        try:
+            load_protected_secret(Path(credential.secret_ref), minimum_bytes=24)
+        except ReceiverError:
+            continue
+        protected_credentials += 1
+    blocking_jobs = connection.execute(
+        "SELECT COUNT(*) FROM processing_jobs WHERE state IN ('pending','processing','quarantined','failed')"
+    ).fetchone()[0]
+    blocking_recompute_windows = connection.execute(
+        "SELECT COUNT(*) FROM recompute_windows WHERE state IN ('pending','processing','failed')"
+    ).fetchone()[0]
+    pending_quarantine = connection.execute(
+        "SELECT COUNT(*) FROM quarantine WHERE review_state='pending'"
+    ).fetchone()[0]
+    backup = {}
+    for stage in ("create", "verify", "restore_test"):
+        row = connection.execute(
+            "SELECT state_value FROM operational_state WHERE state_key=?",
+            (f"backup_{stage}_status",),
+        ).fetchone()
+        backup[stage] = row is not None and row[0] == 1
+    checks = (
+        (active_subjects == 1, "active_subject_count"),
+        (active_devices >= 1, "active_device_missing"),
+        (configured_device_identities == active_devices, "device_identity_missing"),
+        (approved_retention_policies == active_subjects, "retention_policy_missing"),
+        (len(credentials) >= 1, "usable_credential_missing"),
+        (protected_credentials == len(credentials), "protected_credential_invalid"),
+        (blocking_jobs == 0, "processing_work_blocking"),
+        (blocking_recompute_windows == 0, "recompute_work_blocking"),
+        (pending_quarantine == 0, "quarantine_review_pending"),
+        (database_integrity, "database_integrity_invalid"),
+        (audit_integrity, "audit_integrity_invalid"),
+        (backup["create"], "backup_create_missing"),
+        (backup["verify"], "backup_verify_missing"),
+        (backup["restore_test"], "backup_restore_test_missing"),
+    )
+    issues = tuple(code for passed, code in checks if not passed)
+    return CommissioningPreflight(
+        active_subjects=active_subjects,
+        active_devices=active_devices,
+        configured_device_identities=configured_device_identities,
+        approved_retention_policies=approved_retention_policies,
+        usable_credentials=len(credentials),
+        protected_credentials=protected_credentials,
+        blocking_jobs=blocking_jobs,
+        blocking_recompute_windows=blocking_recompute_windows,
+        pending_quarantine=pending_quarantine,
+        audit_entries=audit_entries,
+        database_integrity=database_integrity,
+        audit_integrity=audit_integrity,
+        backup_create=backup["create"],
+        backup_verify=backup["verify"],
+        backup_restore_test=backup["restore_test"],
+        issues=issues,
+        ready=not issues,
+    )
 
 
 def _fields(*values: str) -> None:

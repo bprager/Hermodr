@@ -3,6 +3,8 @@
 **Status:** In progress; pre-device controls and post-reboot baseline complete
 **Activation scope:** synthetic data only until every production gate below passes
 
+The dedicated iPhone procedure is in [IPHONE_OWNTRACKS.md](IPHONE_OWNTRACKS.md), and the evidence/sign-off record is in [ACCEPTANCE.md](ACCEPTANCE.md). The read-only `admin commissioning-preflight` command now reports every repository-controlled gate using aggregate, identifier-free JSON.
+
 ## Post-reboot baseline
 
 On 2026-09-11 the application host entered a new boot with build `619145e` and schema version 6. The receiver, processor, metrics timer, and backup timer returned enabled and active without operator restart. Private liveness and storage-backed readiness returned success.
