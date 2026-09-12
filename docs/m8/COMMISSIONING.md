@@ -25,9 +25,12 @@ The gateway host remained available, could reach the ingestion listener, and cou
 
 ## Remaining external evidence
 
-- Store the newly generated Hermóðr age identity in Bitwarden, retrieve it independently of Odin and Saga, and complete the documented SOPS-to-Saga restore drill. The repository ciphertext round trip is already verified.
 - Real-device access and observed iOS behavior
 - Data-owner approval of battery behavior, event frequency, known-place setup, and tuned thresholds
 - Signed version 1 production acceptance
+
+## Recovery evidence
+
+On 2026-09-12 the identity retrieved from Bitwarden exactly matched the protected staging identity, decrypted the committed SOPS artifact, and restore-tested a Saga archive. The staging identity, retrieved identity, and temporary plaintext passphrase were securely removed from Odin after success.
 
 Production activation and version 2 enrollment remain blocked until these items are complete.

@@ -16,4 +16,4 @@
 - [x] Bernd is the accountable recovery-key custodian; the recoverable key copy must remain independent of Odin and Saga.
 - [x] Public route is approved and tested without request-body or credential logging.
 
-Commissioning must still demonstrate access to the independently held recovery-key copy; this checklist records policy ownership rather than the secret or its storage details.
+The 2026-09-12 commissioning drill retrieved the identity from Bitwarden, decrypted the committed SOPS artifact, restore-tested a Saga archive, and removed all temporary identity and plaintext copies from Odin.

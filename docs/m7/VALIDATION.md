@@ -25,5 +25,5 @@ The processor unit permits only local Unix sockets, has no graph dependency or c
 - No production phone has been registered and no real location event has been accepted. M8 commissioning remains the next milestone.
 - No production place is created automatically; proposed waypoint places require explicit review.
 - The fake importer proves the contract boundary but is not the separately owned production graph importer.
-- Encrypted off-host backup and restore testing now use the approved RAID-5-backed `saga` destination, and Bernd is the designated recovery-key custodian. An independent key-recovery drill remains commissioning evidence.
+- Encrypted off-host backup and restore testing use the approved RAID-5-backed `saga` destination, Bernd is the recovery-key custodian, and the independent Bitwarden/SOPS retrieval drill passed.
 - Device-derived battery behavior, event frequency, significant-change behavior, offline upload behavior, and threshold tuning require real-device evidence in M8.

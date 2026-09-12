@@ -160,7 +160,7 @@ The plan uses these priority levels:
 
 **Goal:** validate actual iOS behavior and obtain explicit approvals.
 
-**Status:** In progress. Post-M4–M7 reboot recovery, audited credential controls, off-host restore, and recovery-custodian approval are complete. Independent key-recovery evidence, real-device evidence, tuning, and signed acceptance remain open.
+**Status:** In progress. Post-M4–M7 reboot recovery, audited credential controls, off-host restore, and independent Bitwarden/SOPS key recovery are complete. Real-device evidence, tuning, and signed acceptance remain open.
 
 - P0 Activate with a rotatable production credential and verify revocation of the bootstrap credential.
 - P0 Observe significant-change and selected-geofence behavior across connectivity loss and delayed upload.

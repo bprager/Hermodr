@@ -25,7 +25,7 @@ The SMTP relay is an operational dependency. Monitor its unit and queue, test th
 
 Backup archives contain only `database.sqlite` and `manifest.json`; both are encrypted together. Restore never overwrites the live database. Verification fails on decryption, archive shape, SHA-256, SQLite integrity, schema version, table-count, or identifier-fingerprint disagreement.
 
-The encryption passphrase is a protected `0600` file owned by the service identity. The daily workflow atomically copies each locally verified archive to the approved RAID-5-backed `saga` destination, then verifies and restore-tests the off-host copy. Bernd is the accountable recovery-key custodian. A recoverable key copy must remain independent of both Odin and Saga; commissioning must prove access without documenting the secret or its storage details.
+The encryption passphrase is a protected `0600` file owned by the service identity. The daily workflow atomically copies each locally verified archive to the approved RAID-5-backed `saga` destination, then verifies and restore-tests the off-host copy. Bernd is the accountable recovery-key custodian. The Hermóðr-specific age identity is held in Bitwarden independently of both Odin and Saga; its completed retrieval drill decrypted the repository SOPS artifact and restore-tested a Saga archive without documenting secret content.
 
 ## Deployment artifacts
 

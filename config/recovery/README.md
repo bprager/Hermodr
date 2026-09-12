@@ -18,4 +18,6 @@ hermodr --config /protected/config.json admin restore-test \
 
 Delete the temporary passphrase immediately after the test through the approved secure-file disposal mechanism. Remove Odin's staging copy of the age identity only after the Bitwarden retrieval test succeeds.
 
+The initial drill completed on 2026-09-12: the identity retrieved from Bitwarden exactly matched the staged identity, decrypted the committed ciphertext, and restore-tested a Saga archive. The retrieved identity, staging identity, and temporary plaintext passphrase were then removed from Odin.
+
 Do not replace either side independently: rotate the runtime passphrase, SOPS ciphertext, and Bitwarden identity through one audited recovery drill.
