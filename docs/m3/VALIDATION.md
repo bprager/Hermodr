@@ -44,6 +44,6 @@ A Grafana contact-point test returned receiver status `ok` with zero errors. Pos
 
 All M3 exit tests pass for the unattended synthetic-only baseline. Real-device activation remains prohibited because it belongs to later commissioning and policy gates, not because of an unfinished M3 test.
 
-The `saga` RAID-5 destination was subsequently approved and its existing boot-managed NFSv4 mount verified writable. The backup workflow now atomically transfers the encrypted archive and repeats verification plus isolated restoration from the off-host copy. Independent recovery-key custody remains a production constraint because the active passphrase still resides on the application host.
+The `saga` RAID-5 destination was subsequently approved and its existing boot-managed NFSv4 mount verified writable. The backup workflow now atomically transfers the encrypted archive and repeats verification plus isolated restoration from the off-host copy. Bernd is the designated recovery-key custodian. Commissioning must still prove access to a recoverable key copy held independently of both hosts.
 
 The M3 processor is deliberately a heartbeat sentinel and does not claim, normalize, retry, or dead-letter queued jobs; that is M4 scope. SMTP upstream acceptance does not prove inbox presentation, and the current notification route has no independently monitored secondary channel. Relay certificate rotation requires rebuilding the pinned Grafana trust layer before the certificate's 2034 expiry.

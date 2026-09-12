@@ -58,7 +58,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 - Advanced the database schema to version 6 for normalized evidence, derivation metadata, retention policies, deletion plans, consumer receipts, payload expiration, and reboot-persistent recompute windows.
 - Made the boot-enabled processor drain durable work and recomputation instead of serving only as a heartbeat sentinel.
-- Recorded approval of the version 1 retention defaults and previously validated public ingestion route; off-host backup destination and recovery-key custody remain external production gates.
+- Completed the version 1 policy approvals: retention defaults, public route, RAID-5-backed `saga` destination, and Bernd as recovery-key custodian. Independent key-recovery evidence remains a commissioning test.
 
 - Completed the synthetic-only M3 operational baseline after certificate-verified Grafana delivery through a boot-enabled local relay received upstream SMTP acceptance with an empty queue.
 - Made SMTP configuration durable in the encrypted source of truth, tightened live secret-file permissions, and pinned the local relay certificate into the Grafana trust store without disabling verification.
