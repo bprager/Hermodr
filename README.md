@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol spike, contracts foundation, secure durable receiver, and synthetic-only operational deployment baseline. Real-device commissioning has not started.
+The project has completed its protocol spike, contracts foundation, secure durable receiver, and synthetic-only M3 operational baseline. Real-device commissioning has not started.
 
 ## Architecture
 
@@ -94,7 +94,7 @@ Receiver startup also requires schema migration 002, at least one active subject
 PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
 ```
 
-M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, encrypted backup verification, isolated restore testing, and full-path reboot proof. The deployment remains synthetic-only until the M3 validation document's external notification gate passes.
+M3 adds boot-enabled hardened units, gateway TLS controls, persistent metric collection, dashboard and alert provisioning, verified notification delivery, encrypted backup verification, isolated restore testing, and full-path reboot proof. The deployment remains synthetic-only while the production-policy, off-host recovery, and real-device commissioning gates remain open.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

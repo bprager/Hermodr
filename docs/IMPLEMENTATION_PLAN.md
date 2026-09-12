@@ -73,7 +73,7 @@ The plan uses these priority levels:
 
 **Goal:** make collection safe to leave unattended before accepting real data.
 
-**Status:** In progress on 2026-09-11. Synthetic-only services, TLS routing, persistent monitoring, rules/dashboard, encrypted restore-tested backups, audit-ID annotations, alert firing/resolution, and both host reboot drills are complete. Successful external notification delivery remains the final exit gate.
+**Status:** Complete on 2026-09-11 for the synthetic-only baseline. Services, TLS routing, persistent monitoring, rules/dashboard, certificate-verified notification delivery, encrypted restore-tested backups, audit-ID annotations, alert firing/resolution, and both host reboot drills passed. Production-policy, off-host recovery, and real-device commissioning remain later gates.
 
 - P0 Create hardened, boot-enabled receiver/processor systemd units or Compose services with persistent data, dependency ordering, bounded restart backoff, and private bindings.
 - P0 Create fenrir route with TLS, request/method limits, rate limiting, sanitized access logs, and synthetic event test.
@@ -88,6 +88,8 @@ The plan uses these priority levels:
 - P1 Add deployment/config/credential-rotation dashboard annotations from audit IDs.
 
 **Exit evidence:** test alert delivery; dashboard screenshots or exported test results; successful isolated restore with reconciled IDs; automatic full-path reboot recovery with critical metrics and alerts active; completed runbook exercise; fenrir cannot reach operations routes.
+
+**Evidence:** 68-test suite at 99.39% line coverage; live gateway and application-host reboot drills; 13 loaded Prometheus rules; four-row dashboard and two delivery bridge rules; firing-to-resolved receiver alert; certificate-verified Grafana contact-point delivery accepted by the upstream SMTP server; encrypted backup and isolated restore reconciliation across schema version, 18 table counts, and 18 identifier fingerprints; `docs/m3/VALIDATION.md` and `docs/runbooks/M3_OPERATIONS.md`.
 
 ### M4 — Normalization and durable worker
 

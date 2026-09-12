@@ -5,7 +5,7 @@
 
 ## Repository evidence
 
-The release gate builds the wheel, validates the pinned patched SQLite runtime, runs static/dependency/privacy/Markdown checks, and executes 68 unit and integration tests. Aggregate line coverage is 99.39% (3444/3465), strictly above the required 95%.
+The release gate builds the wheel, validates the pinned patched SQLite runtime, runs static/dependency/privacy/Markdown checks, and executes 68 unit and integration tests. Aggregate line coverage is 99.39% (3449/3470), strictly above the required 95%.
 
 Tests cover encrypted backup creation and failure states, archive/digest/integrity/schema/table/identifier reconciliation, isolated restore status, durable metrics, processor heartbeat, CLI boundaries, systemd hardening, gateway privacy, alert families, and the four dashboard rows.
 
@@ -23,20 +23,27 @@ Tests cover encrypted backup creation and failure states, archive/digest/integri
 ## Full-path reboot and alert evidence
 
 - The application host changed boot ID from `9cef0fdb-8fec-4d4a-8abb-ce37eb56934f` to `1255e66a-37fa-437d-918f-e75fcdb250d8`.
+- A subsequent host reboot changed the boot ID again to `0e04ce12-1c72-4498-a9a6-5bd797c887be`; all five enabled Hermodr units/timers resumed, and both long-running services remained at zero restart attempts after boot.
 - After boot, receiver, processor sentinel, metrics timer, and backup timer were enabled and active; readiness returned `ready` automatically.
 - Without a new event, raw-event and pending-job counts remained exactly one, all three backup stages remained successful, and database integrity remained `ok`.
 - The metrics bridge returned automatically. Prometheus retained 24 samples from before reboot and produced 15 after reboot, all with pending queue value one.
+- Across the subsequent reboot, Prometheus retained 15 pre-boot and 26 post-boot pending-queue samples, again with the only observed value equal to one.
 - Prometheus reloaded both Hermodr rule groups and 13 rules. Grafana returned a healthy database, the `hermodr-operations` dashboard retained all four rows, and both delivery rules remained provisioned.
+- The dedicated filtered node-exporter scrape is the sole current source for `hermodr_*`; the general node scrape drops that prefix, preventing duplicate gauges and notifications. Prometheus's file-discovery target directory is mounted and produces no missing-watch errors.
 - A post-reboot isolated restore reconciled schema version 2, all 18 table counts, and all 18 identifier-set fingerprints.
 - A controlled receiver outage moved `hermodr_receiver_ready` from one to zero and the durable-ingest alert from absent to pending to firing. Restart returned readiness to one and the alert resolved.
 - An append-only deployment audit event was successfully added to the persistent dashboard as an opaque audit-ID annotation. The same workflow supports configuration activation and credential rotation.
 
-## Alert delivery finding
+## Alert delivery evidence
 
-The generic contact-point delivery test reached the configured SMTP server but received an authentication rejection. A pre-existing Compose defect that blanked the SMTP host was corrected and the container now receives the protected configured host; the remaining credential rejection requires a valid authoritative SMTP secret. Alert collection, Prometheus evaluation, Grafana evaluation, and routing remain active, but human notification delivery is not yet proven.
+The supplied age identity matched the configured SOPS recipient and decrypted the authoritative SMTP value. Its value was byte-for-byte identical to the active credential, proving the original upstream authentication rejection was not a synchronization defect. The delivery path was changed to Odin's boot-enabled local Postfix relay, with the stable `odin` hostname mapped to the container host gateway. Grafana uses opportunistic STARTTLS with verification enabled and a pinned public relay certificate; no SMTP credential is required on the relay-trusted deployment network.
 
-## Remaining acceptance gate
+A Grafana contact-point test returned receiver status `ok` with zero errors. Postfix logged STARTTLS, accepted one recipient, received upstream `250 OK`, removed the message, and reported an empty queue. The protected live environment and age identity have mode `0600`; the encrypted SOPS source of truth now records the local-relay settings for repeatable deployment.
 
-Successful external notification delivery is the only unfinished M3 exit test. Real-device activation remains prohibited until a valid SMTP credential is synchronized from the authoritative secret store and a repeated Grafana contact-point test reports success.
+## Milestone result and remaining constraints
+
+All M3 exit tests pass for the unattended synthetic-only baseline. Real-device activation remains prohibited because it belongs to later commissioning and policy gates, not because of an unfinished M3 test.
 
 Off-host backup replication and recovery-key custody also remain production constraints. The discovered off-host mount is read-only, and the local encryption passphrase resides on the application host; current archives provide tested local recovery but not host-loss recovery.
+
+The M3 processor is deliberately a heartbeat sentinel and does not claim, normalize, retry, or dead-letter queued jobs; that is M4 scope. SMTP upstream acceptance does not prove inbox presentation, and the current notification route has no independently monitored secondary channel. Relay certificate rotation requires rebuilding the pinned Grafana trust layer before the certificate's 2034 expiry.

@@ -225,6 +225,12 @@ class DeploymentArtifactTests(unittest.TestCase):
         self.assertIn("hermodr_receiver_ready 1", exporter)
         annotator = (ROOT / "deploy/monitoring/hermodr-annotate").read_text(encoding="utf-8")
         self.assertIn('"dashboardUID":"hermodr-operations"', annotator)
+        mail_trust = (ROOT / "deploy/monitoring/grafana-mail-trust.Dockerfile").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("FROM grafana/grafana:11.4.0", mail_trust)
+        self.assertIn("RUN update-ca-certificates", mail_trust)
+        self.assertTrue(mail_trust.rstrip().endswith("USER grafana"))
         dashboard = json.loads((ROOT / "deploy/monitoring/hermodr-dashboard.json").read_text(encoding="utf-8"))
         rows = [panel["title"] for panel in dashboard["panels"] if panel["type"] == "row"]
         self.assertEqual(rows, ["Ingestion", "Freshness", "Queue and processor", "Storage and recovery"])

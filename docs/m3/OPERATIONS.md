@@ -9,7 +9,8 @@ This is the deployment contract for the unattended synthetic-only baseline. Host
 - Migration runs before the receiver and processor. Both long-running units use bounded restart backoff and boot enablement.
 - The M3 processor is a heartbeat sentinel. It proves process ordering and reboot recovery but intentionally does not claim jobs; durable job execution starts in M4.
 - A persistent systemd timer reconstructs critical metrics from SQLite and atomically publishes them to a node-exporter textfile collector. Prometheus retains series in a named volume.
-- Grafana provisions the four-row dashboard and two notification bridge rules from files while its database remains in a named volume.
+- Prometheus ingests Hermodr textfile metrics through one dedicated filtered scrape; any general scrape of the same exporter drops `hermodr_*` to prevent duplicate series and notifications.
+- Grafana provisions the four-row dashboard and two notification bridge rules from files while its database remains in a named volume. A boot-enabled local SMTP relay provides notification delivery; its public certificate is added to Grafana's trust store so opportunistic STARTTLS retains hostname and chain verification.
 - The daily backup timer uses SQLite's online backup API, `PRAGMA integrity_check`, a manifest containing table counts and cryptographic identifier-set fingerprints, GPG AES-256 encryption, verification, and an isolated restore test.
 
 ## Critical signals
@@ -17,6 +18,8 @@ This is the deployment contract for the unattended synthetic-only baseline. Host
 Restart-safe gauges cover database/WAL/shared-memory size, filesystem free bytes, database integrity, processing jobs by state, oldest pending age, aggregate reporting freshness, quarantine counts, outbox sequence, processor heartbeat, and create/verify/restore-test backup status and timestamps. The exporter adds `hermodr_metrics_bridge_up` so a failed reconstruction cannot leave stale healthy values behind.
 
 Prometheus evaluates durable-ingest availability, 5xx rate, p95 acceptance latency, report freshness, disk/WAL pressure, database integrity, backup freshness, metrics-export health, and processor-sentinel freshness. Grafana bridges firing Prometheus alerts to its configured notification policy.
+
+The SMTP relay is an operational dependency. Monitor its unit and queue, test the contact point after certificate or network changes, and rebuild the pinned Grafana trust layer before the relay certificate expires or rotates. SMTP acceptance proves transfer to the upstream server, not display in a recipient mailbox; production operations should add an independently monitored delivery path.
 
 ## Backup guarantees and boundaries
 

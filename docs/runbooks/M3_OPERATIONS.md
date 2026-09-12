@@ -55,5 +55,7 @@ Use a unique run ID for every intervention and retain command output in the rest
 ## Notification delivery failure
 
 1. Run the Grafana contact-point test and retain only status/error class, not recipient details.
-2. If SMTP rejects authentication, keep alert evaluation active, mark delivery degraded, and rotate the protected SMTP credential from its authoritative secret store.
-3. Repeat until the integration reports success and verify receipt out of band.
+2. Confirm the host-local relay is enabled and active, Grafana resolves its stable relay hostname to the host gateway, STARTTLS succeeds, and the relay trusts only the intended deployment network.
+3. If certificate verification fails, compare the live relay certificate fingerprint and hostname with the pinned public certificate. Replace and rebuild the trust layer only after authenticating the new certificate; never disable verification as a shortcut.
+4. If an authenticated upstream relay rejects credentials, keep alert evaluation active, mark delivery degraded, and rotate the protected credential from its authoritative secret store.
+5. Repeat until Grafana reports success, the relay records upstream acceptance, its queue is empty, and receipt is verified out of band.

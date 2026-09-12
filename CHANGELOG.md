@@ -46,7 +46,10 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
-- Advanced M3 deployment, critical-gauge reconstruction, and backup work to complete; retained external notification delivery and full application-host reboot as explicit gates.
+- Completed the synthetic-only M3 operational baseline after certificate-verified Grafana delivery through a boot-enabled local relay received upstream SMTP acceptance with an empty queue.
+- Made SMTP configuration durable in the encrypted source of truth, tightened live secret-file permissions, and pinned the local relay certificate into the Grafana trust store without disabling verification.
+- Documented local-relay health, queue, certificate-rotation, raw environment parsing, and secondary-notification limitations.
+- Eliminated duplicate Hermodr metric and alert series by assigning them to one filtered scrape, and mounted the existing Prometheus file-discovery targets to stop repeated watch errors.
 - Corrected the live Grafana Compose environment precedence that previously blanked configured SMTP connection values.
 - Completed gateway and application-host reboot drills with an unchanged queued event, monitoring history spanning reboot, restored dashboard/rules, and a firing-to-resolved durable-ingest alert exercise.
 - Advanced secure-collection backlog items HMD-009 through HMD-012 to Done and made M3 deployment/recovery work the active next milestone.
