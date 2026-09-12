@@ -8,14 +8,27 @@ Use a unique run ID for every intervention and retain command output in the rest
 2. Check receiver readiness on loopback and confirm the public gateway exposes neither health nor metrics.
 3. Confirm `hermodr_metrics_bridge_up == 1`, database integrity equals one, processor heartbeat is current, and durable queue counts match SQLite.
 4. Restart one component at a time. For a host reboot, record boot ID, queue count, newest restore-tested backup timestamp, and dashboard UID before reboot; compare them after automatic recovery without sending a new event.
-5. Escalate if the queue count decreases before M4, any acknowledged ingest ID disappears, metrics do not resume, or alert evaluation is absent.
+5. Escalate if any acknowledged ingest ID disappears, a nonzero queue fails to drain after processor recovery, metrics do not resume, or alert evaluation is absent.
 
 ## Credential rotation
 
-1. Create a new `0600` secret outside source control and add a new credential row with a bounded overlap interval.
+1. Create a new `0600` secret outside source control. Stage it through the audited command boundary; never edit the credential table directly:
+
+   ```shell
+   hermodr --config /etc/hermodr/config.json admin credential-stage \
+     --subject-id SUBJECT --device-id DEVICE --key-id NEW_KEY \
+     --secret-ref /protected/path --reason-code rotation --run-id RUN
+   ```
+
 2. Run `receiver --check`, test the new credential through TLS using a synthetic zero-coordinate event, and verify the old credential still works during overlap.
-3. Expire the old database record, restart the receiver only if its file reference changed, prove old rejection and new acceptance, then delete the old secret.
-4. Record the opaque key ID, run ID, reason, result, build, and configuration fingerprint in the restricted audit record. Never record the secret.
+3. Revoke the old credential only after the new path succeeds; the command refuses to remove the final usable credential:
+
+   ```shell
+   hermodr --config /etc/hermodr/config.json admin credential-revoke \
+     --key-id OLD_KEY --reason-code rotation_complete --run-id RUN
+   ```
+4. Prove old rejection and new acceptance, then delete the old secret file.
+5. Record the opaque key ID, run ID, reason, result, build, and configuration fingerprint in the restricted audit record. Never record the secret.
 
 ## Storage pressure or WAL growth
 

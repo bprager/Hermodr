@@ -51,6 +51,7 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [M3 operator runbook](docs/runbooks/M3_OPERATIONS.md)
 - [M4–M7 validation evidence](docs/m7/VALIDATION.md)
 - [Processing and lifecycle runbook](docs/runbooks/M4_M7_OPERATIONS.md)
+- [M8 real-device commissioning checklist](docs/m8/COMMISSIONING.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)

@@ -15,6 +15,7 @@ from .metrics import reconstruct_critical_metrics
 from .backup import BackupError, create_backup, verify_backup
 from .audit import ANNOTATION_ACTIONS, AuditError, record_change, verify_chain
 from .clock import SystemClock, unix_milliseconds
+from .commissioning import CommissioningError, revoke_credential, stage_credential
 from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
 from .derivation import DerivationError, preview_subject, reprocess_subject
@@ -37,6 +38,7 @@ def parser() -> argparse.ArgumentParser:
         "build-info", "metrics", "audit-change", "audit-verify", "backup-create",
         "backup-verify", "restore-test", "reprocess-preview", "reprocess-apply",
         "retention-approve", "retention-apply", "deletion-plan", "deletion-apply",
+        "credential-stage", "credential-revoke",
     ))
     admin.add_argument("--archive", type=Path)
     admin.add_argument("--passphrase-file", type=Path)
@@ -48,6 +50,11 @@ def parser() -> argparse.ArgumentParser:
     admin.add_argument("--start-ms", type=int)
     admin.add_argument("--end-ms", type=int)
     admin.add_argument("--plan-id")
+    admin.add_argument("--device-id")
+    admin.add_argument("--key-id")
+    admin.add_argument("--secret-ref", type=Path)
+    admin.add_argument("--valid-from-ms", type=int)
+    admin.add_argument("--valid-until-ms", type=int)
     admin.add_argument("--now-ms", type=int)
     admin.add_argument("--batch-size", type=int, default=100)
     migration = commands.add_parser("migrate")
@@ -150,6 +157,30 @@ def run(arguments: list[str] | None = None) -> int:
                 now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
                 report = apply_deletion(connection, configuration, args.plan_id, now_ms, args.run_id)
                 _safe_result(counts=report, plan_id=args.plan_id, status="applied")
+            elif args.command == "admin" and args.action == "credential-stage":
+                if None in (
+                    args.subject_id, args.device_id, args.key_id, args.secret_ref,
+                    args.reason_code, args.run_id,
+                ):
+                    raise CommissioningError("credential_arguments_missing")
+                valid_from_ms = args.valid_from_ms
+                if valid_from_ms is None:
+                    valid_from_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                audit_id = stage_credential(
+                    connection, configuration, subject_id=args.subject_id, device_id=args.device_id,
+                    key_id=args.key_id, secret_ref=args.secret_ref, valid_from_ms=valid_from_ms,
+                    valid_until_ms=args.valid_until_ms, reason_code=args.reason_code, run_id=args.run_id,
+                )
+                _safe_result(audit_id=audit_id, status="staged")
+            elif args.command == "admin" and args.action == "credential-revoke":
+                if None in (args.key_id, args.reason_code, args.run_id):
+                    raise CommissioningError("credential_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                audit_id, changed = revoke_credential(
+                    connection, configuration, key_id=args.key_id, revoked_at_ms=now_ms,
+                    reason_code=args.reason_code, run_id=args.run_id,
+                )
+                _safe_result(audit_id=audit_id, changed=changed, status="revoked" if changed else "already_revoked")
             elif args.command == "admin":
                 if args.archive is None or args.passphrase_file is None:
                     raise BackupError("backup_arguments_missing")
@@ -170,7 +201,7 @@ def run(arguments: list[str] | None = None) -> int:
             if connection is not None:
                 connection.close()
     except (
-        AuditError, BackupError, ConfigurationError, DatabaseError, DerivationError,
+        AuditError, BackupError, CommissioningError, ConfigurationError, DatabaseError, DerivationError,
         LifecycleError, ReceiverError,
     ) as exc:
         _safe_result(error=str(exc), status="error")

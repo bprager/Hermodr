@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- Audited credential staging and revocation commands that validate protected secret files and refuse to revoke a subject's final usable credential.
+
 - Transactional subject-partitioned processing with durable leases, reboot reclamation, bounded retry/dead-letter handling, deterministic normalization, quality flags, and canonical outbox publication.
 - Accuracy-aware versioned places plus deterministic event-time visits, transitions, trips, coverage gaps, recomputation, source-transition reconciliation, and supersession events.
 - Approved default retention controls, explicit evidence holds, count-checked two-step deletion, idempotent tombstones, and audit-chain verification during backup and restore checks.

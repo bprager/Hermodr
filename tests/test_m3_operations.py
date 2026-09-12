@@ -14,6 +14,7 @@ from unittest.mock import patch
 from hermodr.backup import BackupError, TABLES, _protected_file, create_backup, verify_backup
 from hermodr.audit import AuditError, record_change
 from hermodr.cli import run
+from hermodr.commissioning import CommissioningError, revoke_credential, stage_credential
 from hermodr.config import Configuration
 from hermodr.database import connect, migrate
 from hermodr.metrics import reconstruct_critical_metrics
@@ -45,6 +46,14 @@ class OperationsTestCase(unittest.TestCase):
         self.passphrase = self.root / "backup.passphrase"
         self.passphrase.write_text("synthetic-test-passphrase-value", encoding="utf-8")
         self.passphrase.chmod(0o600)
+        self.first_secret = self.root / "first.secret"
+        self.first_secret.write_bytes(b"first-synthetic-secret-value")
+        self.first_secret.chmod(0o600)
+        connection = connect(self.configuration)
+        Repository(connection).add_credential(
+            "sub_synthetic", "dev_synthetic", "key_first", str(self.first_secret), 1,
+        )
+        connection.close()
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -128,6 +137,63 @@ class BackupTests(OperationsTestCase):
 
 
 class ProcessorAndCliTests(OperationsTestCase):
+    def test_audited_credential_rotation_and_last_credential_guard(self):
+        second_secret = self.root / "second.secret"
+        second_secret.write_bytes(b"second-synthetic-secret-value")
+        second_secret.chmod(0o600)
+        connection = connect(self.configuration)
+        try:
+            with self.assertRaisesRegex(CommissioningError, "credential_replacement_required"):
+                revoke_credential(
+                    connection, self.configuration, key_id="key_first", revoked_at_ms=10,
+                    reason_code="rotation", run_id="run_guard",
+                )
+            audit_id = stage_credential(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_synthetic", key_id="key_second", secret_ref=second_secret,
+                valid_from_ms=5, valid_until_ms=None, reason_code="rotation", run_id="run_stage",
+            )
+            revoked_audit, changed = revoke_credential(
+                connection, self.configuration, key_id="key_first", revoked_at_ms=10,
+                reason_code="rotation_complete", run_id="run_revoke",
+            )
+            self.assertTrue(changed)
+            self.assertIsNotNone(revoked_audit)
+            self.assertNotEqual(audit_id, revoked_audit)
+            self.assertEqual(connection.execute(
+                "SELECT valid_until_ms FROM credentials WHERE key_id='key_first'"
+            ).fetchone()[0], 10)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM audit_events").fetchone()[0], 2)
+            self.assertEqual(revoke_credential(
+                connection, self.configuration, key_id="key_first", revoked_at_ms=10,
+                reason_code="rotation_complete", run_id="run_repeat",
+            ), (None, False))
+        finally:
+            connection.close()
+
+    def test_credential_cli_boundaries(self):
+        second_secret = self.root / "second.secret"
+        second_secret.write_bytes(b"second-synthetic-secret-value")
+        second_secret.chmod(0o600)
+        with redirect_stdout(io.StringIO()) as missing:
+            self.assertEqual(run(["--config", str(self.config_path), "admin", "credential-stage"]), 2)
+        self.assertIn("credential_arguments_missing", missing.getvalue())
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(run([
+                "--config", str(self.config_path), "admin", "credential-stage",
+                "--subject-id", "sub_synthetic", "--device-id", "dev_synthetic",
+                "--key-id", "key_second", "--secret-ref", str(second_secret),
+                "--reason-code", "rotation", "--run-id", "run_stage", "--now-ms", "5",
+            ]), 0)
+            self.assertEqual(run([
+                "--config", str(self.config_path), "admin", "credential-revoke",
+                "--key-id", "key_first", "--reason-code", "rotation_complete",
+                "--run-id", "run_revoke", "--now-ms", "10",
+            ]), 0)
+        self.assertIn('"status":"staged"', output.getvalue())
+        self.assertIn('"status":"revoked"', output.getvalue())
+
     def test_append_only_audit_chain_and_cli_boundary(self):
         connection = connect(self.configuration)
         try:
