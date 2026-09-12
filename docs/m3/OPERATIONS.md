@@ -25,7 +25,7 @@ The SMTP relay is an operational dependency. Monitor its unit and queue, test th
 
 Backup archives contain only `database.sqlite` and `manifest.json`; both are encrypted together. Restore never overwrites the live database. Verification fails on decryption, archive shape, SHA-256, SQLite integrity, schema version, table-count, or identifier-fingerprint disagreement.
 
-The encryption passphrase is a protected `0600` file owned by the service identity. This protects an archive separated from the key, but not against full compromise of the running host. Production activation still requires an approved off-host writable destination and recovery-key custody separate from the application host.
+The encryption passphrase is a protected `0600` file owned by the service identity. The daily workflow atomically copies each locally verified archive to the approved RAID-5-backed `saga` destination, then verifies and restore-tests the off-host copy. This protects an archive separated from the key, but not against full compromise of the running host. Production activation still requires recovery-key custody separate from the application host.
 
 ## Deployment artifacts
 

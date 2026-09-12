@@ -13,7 +13,7 @@ The gateway host remained available, could reach the ingestion listener, and cou
 
 ## Commissioning sequence
 
-1. Approve a writable off-host backup destination and assign recovery-key custody outside the application host. Record an isolated restore from that destination.
+1. Use the approved RAID-5-backed `saga` destination and record an isolated restore from its encrypted copy. Assign recovery-key custody outside the application host.
 2. Create a new protected credential file with mode `0600`. Stage it through `admin credential-stage`; do not edit the database directly.
 3. Configure the real device through the approved TLS route. Keep the bootstrap credential active during a bounded overlap.
 4. Verify a current location, significant-change update, selected-geofence transition, status message, and delayed upload. Evidence records counts, timestamp shapes, response classes, and bounded identifiers only.
@@ -25,7 +25,7 @@ The gateway host remained available, could reach the ingestion listener, and cou
 
 ## Remaining external evidence
 
-- Off-host backup destination approval and independent recovery-key custodian
+- Independent recovery-key custodian outside the application host
 - Real-device access and observed iOS behavior
 - Data-owner approval of battery behavior, event frequency, known-place setup, and tuned thresholds
 - Signed version 1 production acceptance

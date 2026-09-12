@@ -1,9 +1,20 @@
 #!/bin/sh
 set -eu
 directory=/var/backups/hermodr
+offhost=${HERMODR_OFFHOST_DIRECTORY:-/mnt/saga/Hermodr}
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 archive="${directory}/hermodr-${stamp}.tar.gpg"
+offhost_archive="${offhost}/hermodr-${stamp}.tar.gpg"
+temporary="${offhost}/.hermodr-${stamp}.$$"
 /opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin backup-create --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
 /opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin backup-verify --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
 /opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin restore-test --archive "$archive" --passphrase-file /etc/hermodr/backup.passphrase
+trap 'rm -f "$temporary"' 0 1 2 15
+cp "$archive" "$temporary"
+chmod 0600 "$temporary"
+mv "$temporary" "$offhost_archive"
+trap - 0 1 2 15
+/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin backup-verify --archive "$offhost_archive" --passphrase-file /etc/hermodr/backup.passphrase
+/opt/hermodr/venv/bin/hermodr --config /etc/hermodr/config.json admin restore-test --archive "$offhost_archive" --passphrase-file /etc/hermodr/backup.passphrase
 find "$directory" -type f -name 'hermodr-*.tar.gpg' -mtime +30 -delete
+find "$offhost" -type f -name 'hermodr-*.tar.gpg' -mtime +30 -delete

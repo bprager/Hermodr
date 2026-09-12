@@ -291,6 +291,13 @@ class DeploymentArtifactTests(unittest.TestCase):
             self.assertIn(alert, rules)
         exporter = (ROOT / "deploy/systemd/hermodr-export-metrics").read_text(encoding="utf-8")
         self.assertIn("hermodr_receiver_ready 1", exporter)
+        backup_unit = (ROOT / "deploy/systemd/hermodr-backup.service").read_text(encoding="utf-8")
+        backup_script = (ROOT / "deploy/systemd/hermodr-backup").read_text(encoding="utf-8")
+        self.assertIn("RequiresMountsFor=/mnt/saga/Hermodr", backup_unit)
+        self.assertIn("ReadWritePaths=/var/lib/hermodr /var/backups/hermodr /mnt/saga/Hermodr", backup_unit)
+        self.assertIn('cp "$archive" "$temporary"', backup_script)
+        self.assertIn('mv "$temporary" "$offhost_archive"', backup_script)
+        self.assertEqual(backup_script.count('restore-test --archive "$offhost_archive"'), 1)
         annotator = (ROOT / "deploy/monitoring/hermodr-annotate").read_text(encoding="utf-8")
         self.assertIn('"dashboardUID":"hermodr-operations"', annotator)
         mail_trust = (ROOT / "deploy/monitoring/grafana-mail-trust.Dockerfile").read_text(

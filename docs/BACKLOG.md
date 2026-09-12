@@ -19,7 +19,7 @@
 | HMD-001 | V1 | P0 | Done | Capture sanitized source-client payload and retry behavior for every supported message type. | Disposable test endpoint | `docs/m0/OWNTRACKS_HTTP_FINDINGS.md`; synthetic harness and fixtures |
 | HMD-002 | V1 | P0 | Done | Inventory gateway and application hosts for boot ordering, storage encryption, time sync, service identities, backup, and monitoring. | Host access | `docs/m0/HOST_INVENTORY.md`; inaccessible facts explicitly listed |
 | HMD-003 | V1 | P0 | Done | Decide implementation language, SQLite driver, deployment mode, authentication mode, and request body shape. | HMD-001, HMD-002 | ADRs 0001–0005 |
-| HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | Retention and route approved; off-host destination and key custodian remain pending in `docs/m0/PRIVACY_RETENTION_CHECKLIST.md` |
+| HMD-004 | V1 | P0 | Blocked | Approve retention defaults, public route, backup destination, and recovery-key ownership. | External policy/infrastructure authority | Retention, route, and encrypted RAID-5 destination on `saga` approved; independent recovery-key custodian remains pending in `docs/m0/PRIVACY_RETENTION_CHECKLIST.md` |
 | HMD-005 | V1 | P0 | Done | Scaffold receiver, processor, admin, and migration commands. | HMD-003 | Reproducible wheel; `docs/m1/VALIDATION.md` |
 | HMD-006 | V1 | P0 | Done | Create multi-subject-ready schema, migrations, invariants, and subject-scoped repository APIs. | HMD-003 | Migration and cross-subject tests in `tests/test_m1_foundation.py` |
 | HMD-007 | V1 | P0 | Done | Define canonical JSON Schemas, deterministic identifiers, hashing, bounded errors, and quality flags. | HMD-001 | `contracts/v1`; synthetic golden contract suite |
@@ -52,7 +52,7 @@
 | HMD-023 | V1 | P0 | Done | Implement bounded recomputation, deterministic convergence, and supersession. | HMD-022 | `docs/m7/VALIDATION.md`; late-event and algorithm-change suite |
 | HMD-024 | V1 | P0 | Done | Implement canonical append-only outbox and fake importer conformance tests. | HMD-020, HMD-023 | `docs/m7/VALIDATION.md`; importer conformance report |
 | HMD-025 | V1 | P0 | Done | Implement subject-policy retention, evidence holds, audited two-step deletion, and outbox tombstones. | HMD-024 | `docs/m7/VALIDATION.md`; retention/deletion report |
-| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | Post-reboot baseline reverified; audited credential controls added; real-device and signed acceptance evidence pending |
+| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | Post-reboot baseline reverified; audited credential controls and approved off-host destination added; real-device, recovery-custodian, and signed acceptance evidence pending |
 
 ## Immediate Follow-on — Two-Subject Version 2
 
