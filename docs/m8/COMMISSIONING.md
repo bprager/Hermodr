@@ -25,7 +25,7 @@ The gateway host remained available, could reach the ingestion listener, and cou
 
 ## Remaining external evidence
 
-- Independent recovery-key access drill by the designated custodian, Bernd
+- Store the newly generated Hermóðr age identity in Bitwarden, retrieve it independently of Odin and Saga, and complete the documented SOPS-to-Saga restore drill. The repository ciphertext round trip is already verified.
 - Real-device access and observed iOS behavior
 - Data-owner approval of battery behavior, event frequency, known-place setup, and tuned thresholds
 - Signed version 1 production acceptance

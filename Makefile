@@ -63,7 +63,7 @@ markdown:
 	@for target in docs/HERMODR_PRD.md docs/IMPLEMENTATION_DESIGN.md docs/IMPLEMENTATION_PLAN.md docs/BACKLOG.md CHANGELOG.md docs/m1/VALIDATION.md docs/m2/VALIDATION.md docs/m2/OBSERVABILITY.md; do test -f "$$target"; done
 
 sensitive:
-	@! grep -RInE --exclude-dir=.git --exclude='Makefile' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|Authorization:[[:space:]]*(Basic|Bearer)[[:space:]]+[A-Za-z0-9+/=_-]{12,})' .
+	@! grep -RInE --exclude-dir=.git --exclude='Makefile' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AGE-SECRET-KEY-|AKIA[0-9A-Z]{16}|Authorization:[[:space:]]*(Basic|Bearer)[[:space:]]+[A-Za-z0-9+/=_-]{12,})' .
 	@! rg --pcre2 '"(?:lat|lon|latitude|longitude)"\s*:\s*(?!0(?:\.0)?(?:\s*[,}]))-?[0-9]' testdata
 
 diff-check:

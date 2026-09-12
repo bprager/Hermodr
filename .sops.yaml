@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: ^config/recovery/backup-passphrase\.sops\.json$
+    age: age19pvjx7lng74fnhekrkhxyvn05vwcmuvvxy5gwcyxluvpg8y9cfjsje9at5

@@ -52,7 +52,7 @@
 | HMD-023 | V1 | P0 | Done | Implement bounded recomputation, deterministic convergence, and supersession. | HMD-022 | `docs/m7/VALIDATION.md`; late-event and algorithm-change suite |
 | HMD-024 | V1 | P0 | Done | Implement canonical append-only outbox and fake importer conformance tests. | HMD-020, HMD-023 | `docs/m7/VALIDATION.md`; importer conformance report |
 | HMD-025 | V1 | P0 | Done | Implement subject-policy retention, evidence holds, audited two-step deletion, and outbox tombstones. | HMD-024 | `docs/m7/VALIDATION.md`; retention/deletion report |
-| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | Post-reboot baseline, audited credential controls, off-host restore, and custodian approval complete; independent key-recovery drill, real-device, and signed acceptance evidence pending |
+| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | Post-reboot baseline, audited credential controls, off-host restore, and custodian approval complete; SOPS recovery ciphertext verified; Bitwarden retrieval drill, real-device, and signed acceptance evidence pending |
 
 ## Immediate Follow-on — Two-Subject Version 2
 
