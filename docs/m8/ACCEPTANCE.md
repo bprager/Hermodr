@@ -23,8 +23,8 @@ Use UTC timestamps and bounded audit/run IDs only.
 
 | Gate | Required evidence | Result |
 | --- | --- | --- |
-| Repository preflight | Redacted aggregate JSON has `status=ready` | Pending deployed artifact |
-| TLS route | iPhone trusts certificate; operations listener remains unreachable from gateway | Pending iPhone |
+| Repository preflight | Redacted aggregate JSON has `status=ready` | Complete 2026-09-12; build `debca4c964b5` |
+| TLS route | iPhone trusts certificate; operations listener remains unreachable from gateway | Gateway isolation and nginx validation complete; iPhone trust pending |
 | Manual location | One foreground publish accepted and processed | Pending iPhone |
 | Significant change | Background update accepted with capture/receipt delay recorded | Pending iPhone |
 | Region transition | One enter and one leave for owner-selected temporary region | Pending owner choice |
@@ -32,8 +32,8 @@ Use UTC timestamps and bounded audit/run IDs only.
 | Connectivity loss | One queued publish drains after connectivity restoration without duplicate canonical effects | Pending iPhone |
 | Credential cutover | New credential succeeds; audited bootstrap revocation; old credential fails | Pending iPhone |
 | Processing/outbox | Jobs and recompute converge; approved projection is idempotent | Pending iPhone |
-| Observability | Dashboard current; alert test delivered; logs pass redaction inspection | Pending iPhone event |
-| Recovery | Fresh encrypted Saga archive verifies and restores in isolation | Complete 2026-09-12; repeat after first real event |
+| Observability | Dashboard current; alert test delivered; logs pass redaction inspection | Dashboard/rules/metrics current; real-event inspection pending |
+| Recovery | Fresh encrypted Saga archive verifies and restores in isolation | Complete after deployed preflight 2026-09-12; repeat after first real event |
 | Rollback | Client Quiet/removal and server endpoint shutdown procedures rehearsed | Pending iPhone |
 | Configuration | Accepted mode and thresholds recorded as a redacted fingerprint | Pending observed behavior |
 

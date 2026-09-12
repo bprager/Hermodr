@@ -25,6 +25,14 @@ The gateway host remained available, could reach the ingestion listener, and cou
 8. Tune and approve event frequency, battery impact, accuracy, dwell, trip, gap, and rate-limit thresholds from observed behavior. Record the approved configuration fingerprint.
 9. Exercise rollback and emergency shutdown, then sign the version 1 acceptance checklist.
 
+## Automated M8 preparation
+
+On 2026-09-12 build `debca4c964b5` was deployed to Odin with schema version 6. The previously approved version 1 retention defaults were activated through the audited command boundary, resolving drift between the policy record and live database. The identifier-free commissioning preflight then returned `status=ready`: one active subject and device, configured device identity, approved retention, one usable protected credential, no blocking job/recompute/quarantine state, valid database and nine-entry audit chains, and successful backup create, verify, and restore-test stages.
+
+The receiver, processor, metrics timer, and backup timer were active; receiver and processor startup checks passed with configuration fingerprint `80c1f65d4ce6b0f8`. The fresh metrics export reported the deployed build, receiver readiness, bridge health, database integrity, and all backup stages as one. Grafana retained dashboard UID `hermodr-operations` with four rows and eighteen Hermóðr rules were loaded. Fenrir's nginx configuration validated inside its runtime namespace, fenrir reached the public listener with the expected method rejection, and it could not connect to the private operations listener.
+
+Deployment audit `aud_001a096c428fdfd29f81e370e5e227b15` was added to the durable audit chain and Grafana dashboard. A fresh backup service run then copied, verified, and isolated-restore-tested the resulting encrypted archive through the configured Saga workflow.
+
 ## Remaining external evidence
 
 - Real-device access and observed iOS behavior
