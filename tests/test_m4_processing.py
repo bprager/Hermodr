@@ -83,6 +83,23 @@ class ProcessingTestCase(unittest.TestCase):
 
 
 class ClaimTests(ProcessingTestCase):
+    def test_missing_status_timestamp_orders_by_receipt_fallback(self):
+        fallback = self.queue("4", {"_type": "status"}, received_at_ms=2_000)
+        device_timed = self.queue("5", {"_type": "status", "tst": 1}, received_at_ms=3_000)
+
+        connection = connect(self.configuration)
+        try:
+            first = claim_next(connection, "worker", 3_000, 1_000)
+            self.assertEqual(first.job_id, device_timed)
+            connection.execute(
+                "UPDATE processing_jobs SET state='processed', lease_owner=NULL, lease_expires_ms=NULL WHERE job_id=?",
+                (device_timed,),
+            )
+            connection.commit()
+            self.assertEqual(claim_next(connection, "worker", 3_000, 1_000).job_id, fallback)
+        finally:
+            connection.close()
+
     def test_claim_is_atomic_ordered_and_owner_bounded(self):
         self.queue("2", {"_type": "status", "tst": 20}, subject="sub_11111111", received_at_ms=20_000)
         first_job = self.queue("1", {"_type": "status", "tst": 30}, received_at_ms=30_000)
@@ -119,7 +136,10 @@ class ClaimTests(ProcessingTestCase):
 
 class NormalizationTests(ProcessingTestCase):
     def test_status_without_device_timestamp_normalizes_at_receipt_time(self):
-        payload = {"_type": "status", "iOS": {"version": "26.2.2"}}
+        payload = {
+            "_type": "status", "iOS": {"version": "26.2.2"},
+            "topic": "owntracks/synthetic/synthetic/status",
+        }
         job_id = self.queue("89", payload, received_at_ms=123_456)
 
         result = process_one(self.configuration, "worker", 123_500)

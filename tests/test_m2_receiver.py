@@ -259,6 +259,7 @@ class AuthenticationAndIngestionTests(ReceiverTestCase):
         payload = {
             "_type": "status",
             "iOS": {"version": "26.2.2"},
+            "topic": "owntracks/synthetic/synthetic/status",
         }
         first = self.service.ingest(self.request(payload))
         retry = self.service.ingest(self.request(payload))
@@ -277,7 +278,7 @@ class AuthenticationAndIngestionTests(ReceiverTestCase):
             self.assertEqual(
                 tuple(row),
                 (
-                    b'{"_type":"status","iOS":{"version":"26.2.2"}}',
+                    b'{"_type":"status","iOS":{"version":"26.2.2"},"topic":"owntracks/synthetic/synthetic/status"}',
                     NOW_SECONDS * 1000,
                     None,
                     "status",

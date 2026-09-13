@@ -27,4 +27,5 @@ Real-device commissioning with OwnTracks iOS 26.2.2 established that **Send Debu
 - This supersedes the design's provisional `202` response body.
 - Non-`2xx` retry timing remains unverified; M8 must capture real-device behavior before activation.
 - OwnTracks iOS 26.2.2 discards a report after a permanent `4xx`; an operator must repair the contract and explicitly create a fresh report rather than wait for retry.
+- A timestamp-less status has no source event identifier. Exact identical snapshots deduplicate as retries and therefore do not advance receipt freshness; a changed status remains distinct.
 - The M0 harness deliberately characterizes an array, alternate content type, empty body, duplicate, out-of-order delivery, and a `503` followed by `200` without claiming undocumented client backoff semantics.
