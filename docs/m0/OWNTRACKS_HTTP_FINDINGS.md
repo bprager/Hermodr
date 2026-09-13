@@ -51,4 +51,4 @@ No raw body, coordinate, identity value, URL query, or credential is retained or
 
 ADR 0004 selects Basic over TLS. ADR 0005 selects a single-object body, `200 []` success, empty-body ignore, and `503` for transient failures.
 
-The original synthetic status fixture included an invented `tst`; it characterized transport but did not prove the real iOS status contract. Actual iOS headers, exact retry schedule after non-`2xx`, offline queue ordering, and other version-specific optional fields were deliberately deferred to real-device commissioning. The fixture now mirrors the observed timestamp-less status shape.
+The original synthetic status fixture included an invented `tst`; it characterized transport but did not prove the real iOS status contract. M8 later confirmed `application/json`, the bounded OwnTracks user-agent classification, gateway request-ID presence, the timestamp-less debug-status shape, and natural delayed delivery without duplicate canonical effects. Exact retry timing after non-`2xx` and a stricter controlled capture-before-receipt queue proof remain open. The fixture now mirrors the observed timestamp-less status shape.

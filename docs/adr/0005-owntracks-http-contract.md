@@ -18,7 +18,7 @@ Real-device commissioning with OwnTracks iOS 26.2.2 established that **Send Debu
 - Ignore a zero-length body with `200 []` and do not create evidence.
 - Return `200 []` after a new event is durably committed and for an exact duplicate.
 - Use bounded `4xx` errors for permanent request problems and `503` for transient storage failure.
-- Initially require `application/json` or `application/*+json`; confirm the actual iOS content type before production.
+- Require `application/json` or `application/*+json`; M8 confirmed that OwnTracks iOS 26.2.2 used `application/json` for the commissioned route.
 - Require and validate Unix-second `tst` for location, transition, and waypoint. Accept a status report without `tst`, preserve a null raw capture time, and use receipt time only as the explicitly labelled normalization-order fallback. This prevents a status report from refreshing location-capture freshness.
 - Authentication owns subject/device identity. Check a supplied `tid` against registration; retain `topic` as restricted source evidence rather than claiming it is registered identity.
 

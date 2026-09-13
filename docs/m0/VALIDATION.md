@@ -49,3 +49,5 @@
 These items require hardware, host, or policy authority and remain assigned to commissioning or the relevant later milestone. M0's repository-executable scope is complete without misrepresenting them as verified.
 
 Commissioning addendum: the historical synthetic status fixture contained `tst`, while OwnTracks iOS 26.2.2 debug status does not. The M0 transport result remains valid, but real status compatibility required the later receiver regression test and contract amendment in ADR 0005.
+
+M8 later verified the supported iOS message shapes, authenticated TLS delivery, a natural delayed upload, and duplicate-free canonical processing. Exact client retry timing after non-`2xx` remains unverified; the external-gate list above is the historical M0 exit state.

@@ -3,6 +3,8 @@
 **Date:** 2026-09-11
 **Scope:** synthetic processing, derivation, lifecycle, and guarded integration
 
+This is point-in-time M4–M7 evidence. M8 subsequently enrolled the first physical iPhone and accepted real events; the synthetic-only statements in the final section describe the M7 exit boundary, not current deployment state.
+
 ## Capabilities
 
 - The durable worker atomically claims subject-partitioned jobs, reclaims expired leases, applies bounded deterministic backoff, dead-letters terminal failures, and resumes pending recomputation after restart.
@@ -22,7 +24,7 @@ The processor unit permits only local Unix sockets, has no graph dependency or c
 
 ## Constraints and next milestone
 
-- No production phone has been registered and no real location event has been accepted. M8 commissioning remains the next milestone.
+- At the M7 exit, no production phone had been registered and no real location event had been accepted; M8 commissioning was the next milestone.
 - No production place is created automatically; proposed waypoint places require explicit review.
 - The fake importer proves the contract boundary but is not the separately owned production graph importer.
 - Encrypted off-host backup and restore testing use the approved RAID-5-backed `saga` destination, Bernd is the recovery-key custodian, and the independent Bitwarden/SOPS retrieval drill passed.

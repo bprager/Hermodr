@@ -52,7 +52,7 @@
 | HMD-023 | V1 | P0 | Done | Implement bounded recomputation, deterministic convergence, and supersession. | HMD-022 | `docs/m7/VALIDATION.md`; late-event and algorithm-change suite |
 | HMD-024 | V1 | P0 | Done | Implement canonical append-only outbox and fake importer conformance tests. | HMD-020, HMD-023 | `docs/m7/VALIDATION.md`; importer conformance report |
 | HMD-025 | V1 | P0 | Done | Implement subject-policy retention, evidence holds, audited two-step deletion, and outbox tombstones. | HMD-024 | `docs/m7/VALIDATION.md`; retention/deletion report |
-| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | TLS/manual/background/region/status paths pass; iOS timestamp-less status repair `a9abb6342216`; controlled queue proof, cutover, recovery repeat, tuning, and signed acceptance pending |
+| HMD-026 | V1 | P0 | In Progress | Complete version 1 real-device commissioning and acceptance. | HMD-001–HMD-025 | TLS/manual/background/region/delayed-delivery/status, credential cutover, processing, and recovery pass; controlled capture-before-receipt proof, battery/tuning approval, observability review, rollback rehearsal, and signed acceptance pending |
 
 ## Immediate Follow-on — Two-Subject Version 2
 

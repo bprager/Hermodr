@@ -49,7 +49,9 @@ It builds and verifies the checksum-pinned SQLite 3.53.4 runtime, confirms its e
 - Metrics are exported, but time-series history, dashboard state, alert evaluation, and alert delivery are not yet persistent or tested.
 - Credential records and protected files can be consumed safely, but the audited operator rotation workflow and runbook are M3 work.
 - Encrypted backups, integrity scheduling, isolated restore, WAL-pressure automation, and recovery drills are not implemented.
-- Real-device content type, retry timing, battery behavior, and gateway interaction remain commissioning gates.
+- At the M2 exit, real-device content type, retry timing, battery behavior, and gateway interaction remained commissioning gates.
 - The processor is not implemented, so accepted jobs intentionally remain pending.
 
 The next recommended milestone is M3: deploy and reboot-harden the receiver boundary, monitoring stack, alerts, and backup/restore workflow before accepting real location evidence.
+
+Subsequent milestones completed that M3 operational work and accepted the first physical iPhone during controlled M8 commissioning. The limitations above remain the historical M2 exit boundary; exact iOS non-`2xx` retry timing and battery impact are still open M8 evidence.

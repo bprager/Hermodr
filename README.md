@@ -2,7 +2,7 @@
 
 Hermóðr is a local-first service for securely collecting location events, preserving their provenance, deriving deterministic visits and trips, and publishing approved canonical records through a guarded outbox.
 
-The project has completed its protocol spike, contracts foundation, secure durable receiver, operational baseline, deterministic processing, sensitive-data lifecycle, and guarded-outbox conformance. Real-device commissioning is the next milestone.
+The project has completed its protocol spike, contracts foundation, secure durable receiver, operational baseline, deterministic processing, sensitive-data lifecycle, and guarded-outbox conformance. The first iPhone now passes the core M8 transport, background, region, status, credential-cutover, processing, and recovery checks; battery observation, threshold approval, rollback rehearsal, and signed production acceptance remain open.
 
 ## Architecture
 
@@ -52,6 +52,8 @@ The receiver and processor are independent processes. The receiver acknowledges 
 - [M4–M7 validation evidence](docs/m7/VALIDATION.md)
 - [Processing and lifecycle runbook](docs/runbooks/M4_M7_OPERATIONS.md)
 - [M8 real-device commissioning checklist](docs/m8/COMMISSIONING.md)
+- [M8 iPhone OwnTracks procedure](docs/m8/IPHONE_OWNTRACKS.md)
+- [M8 evidence and sign-off record](docs/m8/ACCEPTANCE.md)
 - [Dependency and license report](docs/m1/DEPENDENCY_LICENSE_REPORT.md)
 - [Approved SQLite runtime supply](docs/m1/SQLITE_RUNTIME.md)
 - [Changelog](CHANGELOG.md)
@@ -97,7 +99,7 @@ Receiver startup also requires schema migration 002, at least one active subject
 PYTHONPATH=src:. python3 -m hermodr --config /path/to/protected-config.json receiver
 ```
 
-The deployment includes boot-enabled hardened units, gateway TLS controls, persistent metric collection, lifecycle and outbox alerting, verified notification delivery, encrypted backup verification, isolated restore testing, and full-path reboot proof. It remains synthetic-only while off-host recovery and real-device commissioning remain open.
+The deployment includes boot-enabled hardened units, gateway TLS controls, persistent metric collection, lifecycle and outbox alerting, verified notification delivery, encrypted off-host backup verification, isolated restore testing, full-path reboot proof, and one commissioned iPhone using a rotatable device credential. It remains in controlled M8 commissioning until the outstanding owner-approved tuning and production-acceptance gates are complete.
 
 Production startup is intentionally rejected unless the linked SQLite library satisfies the approved patched-version gate.
 

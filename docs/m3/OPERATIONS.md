@@ -2,6 +2,8 @@
 
 This is the deployment contract for the unattended synthetic-only baseline. Host-specific paths, addresses, account names, and secrets belong in protected local configuration, not this repository.
 
+This document remains the historical M3 baseline contract. M4–M8 extend it with durable processing, lifecycle/outbox controls, off-host recovery, and controlled real-device commissioning; current status is recorded in `docs/m8/COMMISSIONING.md`.
+
 ## Runtime topology
 
 - The TLS gateway accepts only `POST /v1/owntracks`, caps bodies at 64 KiB, applies a two-request-per-second rate with a bounded burst, and uses a request log format that excludes authorization, query strings, and bodies.

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Added
 
+- Completed the first iPhone's TLS, manual publish, Significant-mode background, temporary-region transition, delayed-delivery, timestamp-less status, credential-rotation, processing-convergence, and post-event recovery evidence.
 - Audited device enrollment and disable commands with active-authority, source-identity, credential, and idempotency guards.
 - A privacy-safe M8 commissioning preflight command, dedicated iPhone OwnTracks configuration guide, and explicit version 1 evidence/sign-off record.
 - Audited credential staging and revocation commands that validate protected secret files and refuse to revoke a subject's final usable credential.
@@ -59,6 +60,7 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Replaced the bootstrap device credential with a protected permanent iPhone credential, proved the old login's generic rejection, disabled the placeholder device, and returned OwnTracks to Significant mode.
 - Accepted the real OwnTracks iOS 26.2.2 timestamp-less debug-status shape without letting status reports refresh device-capture freshness.
 
 - Advanced the database schema to version 6 for normalized evidence, derivation metadata, retention policies, deletion plans, consumer receipts, payload expiration, and reboot-persistent recompute windows.

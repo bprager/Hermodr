@@ -1,6 +1,6 @@
 # Hermóðr Implementation Plan
 
-**Status:** Active; M0 through M2 are repository-complete
+**Status:** Active; M0 through M7 are repository-complete and M8 real-device commissioning is in progress
 **Companion design:** `docs/IMPLEMENTATION_DESIGN.md`
 
 ## 1. Delivery Approach
@@ -19,7 +19,7 @@ The plan uses these priority levels:
 
 **Goal:** remove client and host uncertainties before contract freeze.
 
-**Status:** Repository-complete on 2026-09-10. Real-device retry/header behavior and infrastructure policy approvals remain explicit commissioning gates.
+**Status:** Repository-complete on 2026-09-10. Later M8 evidence verified the supported real-device shapes and delayed delivery; exact non-`2xx` retry timing remains an explicit commissioning gate.
 
 - P0 Capture sanitized OwnTracks HTTP behavior for location, transition, waypoint, and status messages.
 - P0 Verify supported bearer/Basic configuration, retry response behavior, content type, timestamp units, device/subject fields, and whether batching occurs.
@@ -160,7 +160,7 @@ The plan uses these priority levels:
 
 **Goal:** validate actual iOS behavior and obtain explicit approvals.
 
-**Status:** In progress. Post-M4–M7 reboot recovery, audited credential controls, off-host restore, independent Bitwarden/SOPS key recovery, the iPhone procedure, privacy-safe preflight, and acceptance record are complete. Real-device TLS, manual, background, region, and timestamp-less status paths pass; controlled queue proof, credential cutover, recovery repeat, tuning, and signed acceptance remain open.
+**Status:** In progress. Post-M4–M7 reboot recovery, audited device and credential controls, off-host restore, independent Bitwarden/SOPS key recovery, privacy-safe preflight, and the first iPhone's TLS, manual, background, region, delayed-delivery, timestamp-less status, credential-cutover, processing, and post-event recovery checks pass. A stricter controlled capture-before-receipt proof, battery observation, owner-approved tuning, observability review, rollback rehearsal, and signed acceptance remain open.
 
 - P0 Activate with a rotatable production credential and verify revocation of the bootstrap credential.
 - P0 Observe significant-change and selected-geofence behavior across connectivity loss and delayed upload.

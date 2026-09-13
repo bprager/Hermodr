@@ -1,6 +1,6 @@
 # M8 Version 1 Acceptance Record
 
-**Status:** Awaiting real-device execution and owner approval
+**Status:** Core real-device execution complete; owner-approved tuning, rollback rehearsal, and production signature pending
 **Evidence rule:** store no credentials, hostnames, coordinates, routes, place names, screenshots, raw payloads, or device identifiers here
 
 ## Automated preflight
@@ -23,7 +23,7 @@ Use UTC timestamps and bounded audit/run IDs only.
 
 | Gate | Required evidence | Result |
 | --- | --- | --- |
-| Repository preflight | Redacted aggregate JSON has `status=ready` | Complete 2026-09-12; build `debca4c964b5` |
+| Repository preflight | Redacted aggregate JSON has `status=ready` | Complete after cutover 2026-09-13 UTC; build `17001fac256a`, one active configured device, one usable protected credential, valid database and fifteen-entry audit chains, no blocking work or quarantine, all backup stages successful |
 | TLS route | iPhone trusts certificate; operations listener remains unreachable from gateway | Complete 2026-09-12 |
 | Manual location | One foreground publish accepted and processed | Complete 2026-09-12 |
 | Significant change | Background update accepted with capture/receipt delay recorded | Complete; 14 updates processed, maximum observed delay 3.754 seconds |

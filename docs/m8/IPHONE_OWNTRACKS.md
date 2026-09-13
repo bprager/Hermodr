@@ -5,6 +5,8 @@
 
 This procedure configures OwnTracks as an HTTP client of Hermóðr. The field order below was verified with OwnTracks iOS 26.2.2; screen names can move between releases. Every all-caps value is a placeholder, including `APPROVED_HOST`; never enter a placeholder literally.
 
+The first-device exercise completed on 2026-09-12 with the permanent credential active, the bootstrap credential revoked, the temporary region removed, and **Significant** selected as the steady-state monitoring mode. The remaining M8 work is observation, owner-approved tuning, rollback rehearsal, and production sign-off; it does not require restoring the bootstrap login.
+
 ## Values the operator supplies
 
 Obtain these values over the approved private channel immediately before setup:

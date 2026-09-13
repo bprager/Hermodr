@@ -3,6 +3,8 @@
 **Validation date:** 2026-09-11
 **Activation scope:** synthetic data only
 
+This is point-in-time M3 evidence. M8 subsequently enrolled the first physical iPhone under controlled commissioning; the synthetic-only activation boundary below describes the M3 exit state.
+
 ## Repository evidence
 
 The release gate builds the wheel, validates the pinned patched SQLite runtime, runs static/dependency/privacy/Markdown checks, and executes 68 unit and integration tests. Aggregate line coverage is 99.39% (3449/3470), strictly above the required 95%.

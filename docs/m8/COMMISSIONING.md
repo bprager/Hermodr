@@ -1,7 +1,7 @@
 # M8 Real-Device Commissioning
 
-**Status:** In progress; pre-device controls and post-reboot baseline complete
-**Activation scope:** synthetic data only until every production gate below passes
+**Status:** In progress; core first-iPhone execution and credential cutover complete
+**Activation scope:** one iPhone under controlled commissioning; production acceptance remains blocked until every remaining gate below passes
 
 The dedicated iPhone procedure is in [IPHONE_OWNTRACKS.md](IPHONE_OWNTRACKS.md), and the evidence/sign-off record is in [ACCEPTANCE.md](ACCEPTANCE.md). The read-only `admin commissioning-preflight` command now reports every repository-controlled gate using aggregate, identifier-free JSON.
 
@@ -35,9 +35,9 @@ Deployment audit `aud_001a096c428fdfd29f81e370e5e227b15` was added to the durabl
 
 ## Remaining external evidence
 
-- Remaining controlled queue evidence and observed iOS battery baseline
-- Data-owner approval of battery behavior, event frequency, known-place setup, and tuned thresholds
-- Signed version 1 production acceptance
+- A controlled queued event whose source capture time demonstrably precedes receipt, plus exact non-`2xx` retry timing if it is to become an acceptance claim
+- An observed iOS battery baseline and data-owner approval of battery behavior, event frequency, retained known-place setup, and tuned thresholds
+- Real-event observability/redaction review, rollback and emergency-shutdown rehearsal, accepted redacted configuration fingerprint, and signed version 1 production acceptance
 
 ## Real-device progress
 
