@@ -35,9 +35,17 @@ Deployment audit `aud_001a096c428fdfd29f81e370e5e227b15` was added to the durabl
 
 ## Remaining external evidence
 
-- Real-device access and observed iOS behavior
+- Remaining controlled queue evidence and observed iOS battery baseline
 - Data-owner approval of battery behavior, event frequency, known-place setup, and tuned thresholds
 - Signed version 1 production acceptance
+
+## Real-device progress
+
+On 2026-09-12 the iPhone trusted the public TLS route and completed one foreground publish, a Significant-mode route, an owner-selected temporary-region enter/leave pair, and a natural delayed delivery. All accepted events processed; the inspected reconnect window had four distinct idempotency keys and no duplicate canonical effects. The temporary region was removed. The end battery level was recorded, but the starting level was not, so battery impact remains unproven.
+
+OwnTracks iOS 26.2.2 **Send Debug Status** exposed a synthetic-contract defect: the real report has no `tst`, and build `b689f65` rejected it with `400`. The request was discarded without persistence. Build `a9abb6342216` amended the type-specific timestamp contract, preserved null raw capture time so status cannot refresh location-capture freshness, and deployed processor before receiver. A fresh report was then accepted and processed with an explicit normalized receipt-time fallback. Only field names were inspected; no status values entered general evidence.
+
+After the real-device events, the commissioning preflight remained ready with database and audit integrity valid, no blocking work or quarantine, and all 64 durable jobs processed. A fresh encrypted backup was created, copied to the approved off-host destination, verified, and restored in isolation successfully.
 
 ## Recovery evidence
 
