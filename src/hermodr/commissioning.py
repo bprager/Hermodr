@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import sqlite3
 
 from .audit import SAFE_CODE, AuditError, record_change, verify_chain
@@ -12,6 +13,9 @@ from .repository import Repository
 
 class CommissioningError(RuntimeError):
     """A bounded commissioning failure safe to expose to an operator."""
+
+
+SOURCE_TID = re.compile(r"^[A-Za-z0-9]{2}$", re.ASCII)
 
 
 @dataclass(frozen=True)
@@ -125,6 +129,114 @@ def commissioning_preflight(connection: sqlite3.Connection, now_ms: int) -> Comm
 def _fields(*values: str) -> None:
     if any(SAFE_CODE.fullmatch(value) is None for value in values):
         raise CommissioningError("credential_fields_invalid")
+
+
+def _device_fields(*values: str) -> None:
+    if any(not isinstance(value, str) or SAFE_CODE.fullmatch(value) is None for value in values):
+        raise CommissioningError("device_fields_invalid")
+
+
+def enroll_device(
+    connection: sqlite3.Connection,
+    configuration: Configuration,
+    *,
+    subject_id: str,
+    device_id: str,
+    source_tid: str,
+    enrolled_at_ms: int,
+    reason_code: str,
+    run_id: str,
+) -> str:
+    _device_fields(subject_id, device_id, reason_code, run_id)
+    if not isinstance(source_tid, str) or SOURCE_TID.fullmatch(source_tid) is None:
+        raise CommissioningError("device_source_tid_invalid")
+    if isinstance(enrolled_at_ms, bool) or not isinstance(enrolled_at_ms, int) or enrolled_at_ms < 0:
+        raise CommissioningError("device_time_invalid")
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        subject = connection.execute(
+            "SELECT status FROM subjects WHERE subject_id=?", (subject_id,),
+        ).fetchone()
+        if subject is None:
+            raise CommissioningError("device_subject_not_found")
+        if subject[0] != "active":
+            raise CommissioningError("device_subject_inactive")
+        connection.execute(
+            """INSERT INTO devices(subject_id,device_id,status,enrolled_at_ms,source_tid)
+               VALUES (?,?,'active',?,?)""",
+            (subject_id, device_id, enrolled_at_ms, source_tid),
+        )
+        audit_id = record_change(
+            connection, configuration, "device_change", device_id, reason_code, run_id,
+            subject_id=subject_id, commit=False,
+        )
+        connection.commit()
+        return audit_id
+    except sqlite3.IntegrityError as exc:
+        connection.rollback()
+        raise CommissioningError("device_conflict") from exc
+    except Exception:
+        connection.rollback()
+        raise
+
+
+def disable_device(
+    connection: sqlite3.Connection,
+    configuration: Configuration,
+    *,
+    subject_id: str,
+    device_id: str,
+    disabled_at_ms: int,
+    reason_code: str,
+    run_id: str,
+) -> tuple[str | None, bool]:
+    _device_fields(subject_id, device_id, reason_code, run_id)
+    if isinstance(disabled_at_ms, bool) or not isinstance(disabled_at_ms, int) or disabled_at_ms < 0:
+        raise CommissioningError("device_time_invalid")
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        row = connection.execute(
+            """SELECT d.status,d.enrolled_at_ms,s.status FROM devices d
+               JOIN subjects s ON s.subject_id=d.subject_id
+               WHERE d.subject_id=? AND d.device_id=?""",
+            (subject_id, device_id),
+        ).fetchone()
+        if row is None:
+            raise CommissioningError("device_not_found")
+        if row[0] == "disabled":
+            connection.rollback()
+            return None, False
+        if row[0] != "active":
+            raise CommissioningError("device_not_active")
+        if row[2] != "active":
+            raise CommissioningError("device_subject_inactive")
+        if disabled_at_ms < row[1]:
+            raise CommissioningError("device_time_invalid")
+        usable = connection.execute(
+            """SELECT 1 FROM credentials c
+               JOIN subjects s ON s.subject_id=c.subject_id
+               WHERE c.subject_id=? AND c.device_id=? AND s.status='active'
+                 AND c.valid_from_ms <= ?
+                 AND (c.valid_until_ms IS NULL OR c.valid_until_ms > ?)
+               LIMIT 1""",
+            (subject_id, device_id, disabled_at_ms, disabled_at_ms),
+        ).fetchone()
+        if usable is not None:
+            raise CommissioningError("device_credential_usable")
+        connection.execute(
+            """UPDATE devices SET status='disabled', revoked_at_ms=?
+               WHERE subject_id=? AND device_id=?""",
+            (disabled_at_ms, subject_id, device_id),
+        )
+        audit_id = record_change(
+            connection, configuration, "device_change", device_id, reason_code, run_id,
+            subject_id=subject_id, commit=False,
+        )
+        connection.commit()
+        return audit_id, True
+    except Exception:
+        connection.rollback()
+        raise
 
 
 def stage_credential(

@@ -15,7 +15,10 @@ from .metrics import reconstruct_critical_metrics
 from .backup import BackupError, create_backup, verify_backup
 from .audit import ANNOTATION_ACTIONS, AuditError, record_change, verify_chain
 from .clock import SystemClock, unix_milliseconds
-from .commissioning import CommissioningError, commissioning_preflight, revoke_credential, stage_credential
+from .commissioning import (
+    CommissioningError, commissioning_preflight, disable_device, enroll_device,
+    revoke_credential, stage_credential,
+)
 from .processor import heartbeat, serve as serve_processor
 from .receiver import ReceiverApplication, ReceiverError, ReceiverService
 from .derivation import DerivationError, preview_subject, reprocess_subject
@@ -39,6 +42,7 @@ def parser() -> argparse.ArgumentParser:
         "backup-verify", "restore-test", "reprocess-preview", "reprocess-apply",
         "retention-approve", "retention-apply", "deletion-plan", "deletion-apply",
         "commissioning-preflight", "credential-stage", "credential-revoke",
+        "device-enroll", "device-disable",
     ))
     admin.add_argument("--archive", type=Path)
     admin.add_argument("--passphrase-file", type=Path)
@@ -51,6 +55,7 @@ def parser() -> argparse.ArgumentParser:
     admin.add_argument("--end-ms", type=int)
     admin.add_argument("--plan-id")
     admin.add_argument("--device-id")
+    admin.add_argument("--source-tid")
     admin.add_argument("--key-id")
     admin.add_argument("--secret-ref", type=Path)
     admin.add_argument("--valid-from-ms", type=int)
@@ -176,6 +181,32 @@ def run(arguments: list[str] | None = None) -> int:
                     valid_until_ms=args.valid_until_ms, reason_code=args.reason_code, run_id=args.run_id,
                 )
                 _safe_result(audit_id=audit_id, status="staged")
+            elif args.command == "admin" and args.action == "device-enroll":
+                if None in (
+                    args.subject_id, args.device_id, args.source_tid,
+                    args.reason_code, args.run_id,
+                ):
+                    raise CommissioningError("device_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                audit_id = enroll_device(
+                    connection, configuration, subject_id=args.subject_id,
+                    device_id=args.device_id, source_tid=args.source_tid,
+                    enrolled_at_ms=now_ms, reason_code=args.reason_code, run_id=args.run_id,
+                )
+                _safe_result(audit_id=audit_id, status="enrolled")
+            elif args.command == "admin" and args.action == "device-disable":
+                if None in (args.subject_id, args.device_id, args.reason_code, args.run_id):
+                    raise CommissioningError("device_arguments_missing")
+                now_ms = args.now_ms if args.now_ms is not None else unix_milliseconds(SystemClock().now())
+                audit_id, changed = disable_device(
+                    connection, configuration, subject_id=args.subject_id,
+                    device_id=args.device_id, disabled_at_ms=now_ms,
+                    reason_code=args.reason_code, run_id=args.run_id,
+                )
+                _safe_result(
+                    audit_id=audit_id, changed=changed,
+                    status="disabled" if changed else "already_disabled",
+                )
             elif args.command == "admin" and args.action == "credential-revoke":
                 if None in (args.key_id, args.reason_code, args.run_id):
                     raise CommissioningError("credential_arguments_missing")

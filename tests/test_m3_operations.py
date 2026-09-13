@@ -15,7 +15,8 @@ from hermodr.backup import BackupError, TABLES, _protected_file, create_backup, 
 from hermodr.audit import AuditError, record_change
 from hermodr.cli import run
 from hermodr.commissioning import (
-    CommissioningError, commissioning_preflight, revoke_credential, stage_credential,
+    CommissioningError, commissioning_preflight, disable_device, enroll_device,
+    revoke_credential, stage_credential,
 )
 from hermodr.config import Configuration
 from hermodr.database import connect, migrate
@@ -139,6 +140,172 @@ class BackupTests(OperationsTestCase):
 
 
 class ProcessorAndCliTests(OperationsTestCase):
+    def test_audited_device_enrollment_is_atomic_and_case_preserving(self):
+        connection = connect(self.configuration)
+        try:
+            audit_id = enroll_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_second", source_tid="aZ", enrolled_at_ms=10,
+                reason_code="commissioning", run_id="run_device_enroll",
+            )
+            device = connection.execute(
+                "SELECT status,enrolled_at_ms,source_tid FROM devices WHERE device_id='dev_second'"
+            ).fetchone()
+            audit = connection.execute(
+                "SELECT audit_id,subject_id,action,target_id FROM audit_events"
+            ).fetchone()
+            self.assertEqual(tuple(device), ("active", 10, "aZ"))
+            self.assertEqual(
+                tuple(audit),
+                (audit_id, "sub_synthetic", "device_change", "dev_second"),
+            )
+            with self.assertRaisesRegex(CommissioningError, "device_conflict"):
+                enroll_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_second", source_tid="A9", enrolled_at_ms=11,
+                    reason_code="commissioning", run_id="run_conflict",
+                )
+            with patch("hermodr.commissioning.record_change", side_effect=AuditError("audit_failed")):
+                with self.assertRaisesRegex(AuditError, "audit_failed"):
+                    enroll_device(
+                        connection, self.configuration, subject_id="sub_synthetic",
+                        device_id="dev_atomic", source_tid="Z1", enrolled_at_ms=12,
+                        reason_code="commissioning", run_id="run_atomic",
+                    )
+            self.assertIsNone(connection.execute(
+                "SELECT 1 FROM devices WHERE device_id='dev_atomic'"
+            ).fetchone())
+        finally:
+            connection.close()
+
+    def test_device_enrollment_validates_authority_and_bounded_fields(self):
+        connection = connect(self.configuration)
+        try:
+            for source_tid in ("Z", "ZZZ", "é1", "_1"):
+                with self.subTest(source_tid=source_tid), self.assertRaisesRegex(
+                    CommissioningError, "device_source_tid_invalid",
+                ):
+                    enroll_device(
+                        connection, self.configuration, subject_id="sub_synthetic",
+                        device_id="dev_second", source_tid=source_tid, enrolled_at_ms=10,
+                        reason_code="commissioning", run_id="run_enroll",
+                    )
+            with self.assertRaisesRegex(CommissioningError, "device_fields_invalid"):
+                enroll_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="Device_Upper", source_tid="Z1", enrolled_at_ms=10,
+                    reason_code="commissioning", run_id="run_enroll",
+                )
+            with self.assertRaisesRegex(CommissioningError, "device_time_invalid"):
+                enroll_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_second", source_tid="Z1", enrolled_at_ms=-1,
+                    reason_code="commissioning", run_id="run_enroll",
+                )
+            connection.execute("UPDATE subjects SET status='disabled'")
+            connection.commit()
+            with self.assertRaisesRegex(CommissioningError, "device_subject_inactive"):
+                enroll_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_second", source_tid="Z1", enrolled_at_ms=10,
+                    reason_code="commissioning", run_id="run_enroll",
+                )
+            with self.assertRaisesRegex(CommissioningError, "device_subject_not_found"):
+                enroll_device(
+                    connection, self.configuration, subject_id="sub_missing",
+                    device_id="dev_second", source_tid="Z1", enrolled_at_ms=10,
+                    reason_code="commissioning", run_id="run_enroll",
+                )
+        finally:
+            connection.close()
+
+    def test_device_disable_guards_credentials_and_is_idempotent(self):
+        connection = connect(self.configuration)
+        try:
+            with self.assertRaisesRegex(CommissioningError, "device_credential_usable"):
+                disable_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_synthetic", disabled_at_ms=10,
+                    reason_code="retire", run_id="run_guard",
+                )
+            enroll_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_second", source_tid="Q2", enrolled_at_ms=10,
+                reason_code="commissioning", run_id="run_enroll",
+            )
+            audit_id, changed = disable_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_second", disabled_at_ms=20,
+                reason_code="retire", run_id="run_disable",
+            )
+            self.assertTrue(changed)
+            self.assertIsNotNone(audit_id)
+            self.assertEqual(disable_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_second", disabled_at_ms=21,
+                reason_code="retire", run_id="run_repeat",
+            ), (None, False))
+            row = connection.execute(
+                "SELECT status,revoked_at_ms FROM devices WHERE device_id='dev_second'"
+            ).fetchone()
+            self.assertEqual(tuple(row), ("disabled", 20))
+            self.assertEqual(connection.execute(
+                "SELECT COUNT(*) FROM audit_events WHERE action='device_change'"
+            ).fetchone()[0], 2)
+            enroll_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_future", source_tid="F3", enrolled_at_ms=20,
+                reason_code="commissioning", run_id="run_future_enroll",
+            )
+            connection.execute(
+                """INSERT INTO credentials(
+                       subject_id,device_id,key_id,secret_ref,valid_from_ms,valid_until_ms
+                   ) VALUES ('sub_synthetic','dev_future','key_future','/synthetic',30,NULL)"""
+            )
+            connection.commit()
+            self.assertTrue(disable_device(
+                connection, self.configuration, subject_id="sub_synthetic",
+                device_id="dev_future", disabled_at_ms=20,
+                reason_code="retire", run_id="run_future_disable",
+            )[1])
+            with self.assertRaisesRegex(CommissioningError, "device_not_found"):
+                disable_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_missing", disabled_at_ms=20,
+                    reason_code="retire", run_id="run_missing",
+                )
+            connection.execute("UPDATE subjects SET status='disabled'")
+            connection.commit()
+            with self.assertRaisesRegex(CommissioningError, "device_subject_inactive"):
+                disable_device(
+                    connection, self.configuration, subject_id="sub_synthetic",
+                    device_id="dev_synthetic", disabled_at_ms=20,
+                    reason_code="retire", run_id="run_inactive_subject",
+                )
+        finally:
+            connection.close()
+
+    def test_device_cli_actions_and_missing_arguments(self):
+        for action in ("device-enroll", "device-disable"):
+            with self.subTest(action=action), redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(run(["--config", str(self.config_path), "admin", action]), 2)
+                self.assertIn("device_arguments_missing", output.getvalue())
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(run([
+                "--config", str(self.config_path), "admin", "device-enroll",
+                "--subject-id", "sub_synthetic", "--device-id", "dev_second",
+                "--source-tid", "B2", "--reason-code", "commissioning",
+                "--run-id", "run_enroll", "--now-ms", "10",
+            ]), 0)
+            self.assertEqual(run([
+                "--config", str(self.config_path), "admin", "device-disable",
+                "--subject-id", "sub_synthetic", "--device-id", "dev_second",
+                "--reason-code", "retire", "--run-id", "run_disable", "--now-ms", "20",
+            ]), 0)
+        reports = tuple(json.loads(line) for line in output.getvalue().splitlines())
+        self.assertEqual([report["status"] for report in reports], ["enrolled", "disabled"])
+
     def test_privacy_safe_commissioning_preflight(self):
         connection = connect(self.configuration)
         try:

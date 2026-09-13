@@ -16,12 +16,12 @@ The gateway host remained available, could reach the ingestion listener, and cou
 ## Commissioning sequence
 
 1. Use the approved RAID-5-backed `saga` destination and its completed isolated restore. Bernd is the designated custodian; prove access to a recoverable key copy held independently of Odin and Saga.
-2. Create a new protected credential file with mode `0600`. Stage it through `admin credential-stage`; do not edit the database directly.
+2. Enroll the real device through `admin device-enroll`. Create a new protected credential file with mode `0600` and stage it through `admin credential-stage`; do not edit the database directly.
 3. Configure the real device through the approved TLS route. Keep the bootstrap credential active during a bounded overlap.
 4. Verify a current location, significant-change update, selected-geofence transition, status message, and delayed upload. Evidence records counts, timestamp shapes, response classes, and bounded identifiers only.
 5. Force loss of connectivity, restore it, and record queue ordering plus retry behavior for non-success responses without retaining request bodies or coordinates in general evidence.
 6. Confirm processing convergence, outbox behavior, aggregate freshness, dashboard recovery, alert delivery, log redaction, database integrity, and fresh off-host backup restoration.
-7. Revoke the bootstrap credential with `admin credential-revoke`. The command refuses to revoke a subject's final usable protected credential. Prove the new credential succeeds and the old credential fails.
+7. Revoke the bootstrap credential with `admin credential-revoke`, then disable its placeholder device with `admin device-disable`. The commands refuse to revoke a subject's final usable protected credential or disable a device with a usable credential. Prove the new credential succeeds and the old credential fails.
 8. Tune and approve event frequency, battery impact, accuracy, dwell, trip, gap, and rate-limit thresholds from observed behavior. Record the approved configuration fingerprint.
 9. Exercise rollback and emergency shutdown, then sign the version 1 acceptance checklist.
 

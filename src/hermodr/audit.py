@@ -19,6 +19,7 @@ ANNOTATION_ACTIONS = frozenset({
     "deployment",
     "deletion_apply",
     "deletion_plan",
+    "device_change",
     "reprocess",
     "retention_apply",
     "retention_policy",

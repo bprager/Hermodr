@@ -12,7 +12,15 @@ Use a unique run ID for every intervention and retain command output in the rest
 
 ## Credential rotation
 
-1. Create a new `0600` secret outside source control. Stage it through the audited command boundary; never edit the credential table directly:
+1. If this is a new physical device, enroll its internal generic identifier and exact two-character OwnTracks tracker ID through the audited command boundary; never edit the device table directly:
+
+   ```shell
+   hermodr --config /etc/hermodr/config.json admin device-enroll \
+     --subject-id SUBJECT --device-id DEVICE --source-tid TT \
+     --reason-code commissioning --run-id RUN
+   ```
+
+2. Create a new `0600` secret outside source control. Stage it through the audited command boundary; never edit the credential table directly:
 
    ```shell
    hermodr --config /etc/hermodr/config.json admin credential-stage \
@@ -20,15 +28,23 @@ Use a unique run ID for every intervention and retain command output in the rest
      --secret-ref /protected/path --reason-code rotation --run-id RUN
    ```
 
-2. Run `receiver --check`, test the new credential through TLS using a synthetic zero-coordinate event, and verify the old credential still works during overlap.
-3. Revoke the old credential only after the new path succeeds; the command refuses to remove the final usable credential:
+3. Run `receiver --check`, test the new credential through TLS, and verify the old credential still works during overlap.
+4. Revoke the old credential only after the new path succeeds; the command refuses to remove the final usable credential:
 
    ```shell
    hermodr --config /etc/hermodr/config.json admin credential-revoke \
      --key-id OLD_KEY --reason-code rotation_complete --run-id RUN
    ```
-4. Prove old rejection and new acceptance, then delete the old secret file.
-5. Record the opaque key ID, run ID, reason, result, build, and configuration fingerprint in the restricted audit record. Never record the secret.
+5. Prove old rejection and new acceptance, then delete the old secret file. If the old credential belonged to a retired placeholder device, disable that device only after revocation:
+
+   ```shell
+   hermodr --config /etc/hermodr/config.json admin device-disable \
+     --subject-id SUBJECT --device-id OLD_DEVICE \
+     --reason-code commissioning_complete --run-id RUN
+   ```
+
+   The command refuses to disable a device with a time-usable credential.
+6. Record the opaque key/device ID, run ID, reason, result, build, and configuration fingerprint in the restricted audit record. Never record the secret.
 
 ## Storage pressure or WAL growth
 

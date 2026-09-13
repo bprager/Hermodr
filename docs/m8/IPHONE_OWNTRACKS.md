@@ -92,7 +92,7 @@ A permanent `4xx` discards this status object. Stop after one failure; repair an
 
 ## 8. Finish credential cutover
 
-Once the new credential has succeeded through TLS and all expected message types are accepted, the operator revokes the bootstrap credential with the audited `credential-revoke` command. The old credential must then receive a generic authentication failure while the iPhone continues to succeed. Never restore the old secret to troubleshoot a client setting.
+Once the new credential has succeeded through TLS and all expected message types are accepted, the operator revokes the bootstrap credential with the audited `credential-revoke` command and disables its placeholder device with `device-disable`. The old credential must then receive a generic authentication failure while the iPhone continues to succeed. Never restore the old secret to troubleshoot a client setting.
 
 ## Troubleshooting
 
