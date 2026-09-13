@@ -54,7 +54,7 @@ The PRD is internally consistent on its main boundary: Hermóðr collects and de
 | The accepted HTTP body shape was unspecified. | ADR 0005 accepts one object, rejects arrays atomically, and ignores zero-length publishes. |
 | “Relevant transport metadata” could accidentally retain personal or secret data. | Use a strict allowlist and omit IP addresses and raw user-agent values by default. |
 | The idempotency source fields and canonicalization rules are unspecified. | Freeze canonical JSON and a keyed idempotency formula before implementation; do not equate near-duplicate coordinates with retransmission. |
-| Location, transition, waypoint, and status messages do not all fit the observation schema. | Use type-specific adapters. Only location-bearing input creates an observation; other types create their explicit canonical or diagnostic representation. |
+| Location, transition, waypoint, and status messages do not all fit the observation schema. | Use type-specific adapters. Only location-bearing input creates an observation; other types create their explicit canonical or diagnostic representation. Status may lack device time: preserve null raw capture time and label receipt time as the normalized ordering fallback. |
 | `failed` and “dead-letter state” could imply two states. | `failed` is the terminal/dead-letter job state; quarantine remains a distinct evidence-review state. |
 | Arrival, visit, trip, gap, and confidence algorithms lack exact semantics. | Treat the algorithm specification and fixtures as a versioned deliverable before implementing each derivation. |
 | Late data can invalidate already published records. | Recompute bounded windows and append supersession records; never rewrite outbox history. |

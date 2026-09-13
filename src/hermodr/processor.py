@@ -89,7 +89,8 @@ def claim_next(
                JOIN raw_events r
                  ON r.subject_id = j.subject_id AND r.ingest_id = j.ingest_id
                WHERE j.state = 'pending' AND j.next_attempt_ms <= ?
-               ORDER BY j.subject_id, r.captured_at_ms, r.received_at_ms, j.job_id
+               ORDER BY j.subject_id, COALESCE(r.captured_at_ms, r.received_at_ms),
+                        r.received_at_ms, j.job_id
                LIMIT 1""",
             (now_ms,),
         ).fetchone()
@@ -235,7 +236,9 @@ def normalize_claimed(
             raise PermanentProcessingError("source_contract_invalid") from exc
         if not isinstance(payload, dict) or payload.get("_type") != row[4]:
             raise PermanentProcessingError("source_contract_invalid")
-        captured_at_ms = int(row[3])
+        if row[3] is None and row[4] != "status":
+            raise PermanentProcessingError("source_contract_invalid")
+        captured_at_ms = int(row[3]) if row[3] is not None else int(row[2])
         normalized_id = deterministic_id("nrm", job.subject_id, job.ingest_id, ALGORITHM)
         normalized = {
             "normalized_event_id": normalized_id, "schema_version": SCHEMA_VERSION,
@@ -245,6 +248,8 @@ def normalize_claimed(
             "source_digest": row[5], "algorithm": ALGORITHM,
             "algorithm_config_version": configuration.fingerprint, "privacy_class": "restricted",
         }
+        if row[3] is None:
+            normalized["captured_at_source"] = "receipt_fallback"
         connection.execute(
             "INSERT OR IGNORE INTO normalized_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (job.subject_id, normalized_id, job.ingest_id, row[0], row[4], captured_at_ms,

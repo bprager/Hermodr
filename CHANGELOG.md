@@ -58,6 +58,8 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ### Changed
 
+- Accepted the real OwnTracks iOS 26.2.2 timestamp-less debug-status shape without letting status reports refresh device-capture freshness.
+
 - Advanced the database schema to version 6 for normalized evidence, derivation metadata, retention policies, deletion plans, consumer receipts, payload expiration, and reboot-persistent recompute windows.
 - Made the boot-enabled processor drain durable work and recomputation instead of serving only as a heartbeat sentinel.
 - Completed the version 1 policy approvals and independent recovery drill: retention defaults, public route, RAID-5-backed `saga` destination, Bernd as custodian, and verified Bitwarden/SOPS recovery with no identity copy retained on Odin.

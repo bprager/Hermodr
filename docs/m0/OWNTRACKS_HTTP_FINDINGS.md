@@ -19,6 +19,7 @@
 - A zero-length publish can occur and is best ignored.
 - `_type` identifies the payload type. The supported PRD types exist on iOS: `location`, `transition`, `waypoint`, and `status`.
 - Location `tst` is a Unix timestamp in seconds. `lat` and `lon` are required for locations; `tid` is required in HTTP mode; `topic` is present only in HTTP payloads on supported app versions.
+- Real-device verification later established that OwnTracks iOS 26.2.2 debug status has an `iOS` object and HTTP-added `topic`, but no `tst` or `tid`. Timestamp requirements are therefore type-specific.
 - Transition events are `enter` or `leave`. Waypoints use `rid` as a stable region identifier and can produce transitions.
 - The documentation describes individual JSON publishes, not an array batch request.
 
@@ -50,4 +51,4 @@ No raw body, coordinate, identity value, URL query, or credential is retained or
 
 ADR 0004 selects Basic over TLS. ADR 0005 selects a single-object body, `200 []` success, empty-body ignore, and `503` for transient failures.
 
-Actual iOS headers, exact retry schedule after non-`2xx`, offline queue ordering, and version-specific optional fields remain hardware facts. They are deliberately deferred to real-device commissioning rather than represented as verified. The harness and fixtures provide the repeatable capture matrix for that check.
+The original synthetic status fixture included an invented `tst`; it characterized transport but did not prove the real iOS status contract. Actual iOS headers, exact retry schedule after non-`2xx`, offline queue ordering, and other version-specific optional fields were deliberately deferred to real-device commissioning. The fixture now mirrors the observed timestamp-less status shape.

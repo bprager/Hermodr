@@ -47,3 +47,5 @@
 - Patched production SQLite installation and concurrency validation.
 
 These items require hardware, host, or policy authority and remain assigned to commissioning or the relevant later milestone. M0's repository-executable scope is complete without misrepresenting them as verified.
+
+Commissioning addendum: the historical synthetic status fixture contained `tst`, while OwnTracks iOS 26.2.2 debug status does not. The M0 transport result remains valid, but real status compatibility required the later receiver regression test and contract amendment in ADR 0005.

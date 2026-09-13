@@ -130,7 +130,7 @@ class Repository:
         source_digest: str,
         payload: bytes,
         received_at_ms: int,
-        captured_at_ms: int,
+        captured_at_ms: int | None,
         source_type: str,
         disposition: str,
         request_id: str,

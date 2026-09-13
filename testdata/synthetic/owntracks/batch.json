@@ -10,6 +10,6 @@
   },
   {
     "_type": "status",
-    "tst": 1893456002
+    "iOS": {"backgroundRefreshStatus": true}
   }
 ]

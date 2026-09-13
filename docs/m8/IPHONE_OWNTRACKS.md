@@ -3,7 +3,7 @@
 **Scope:** Hermóðr version 1 commissioning
 **Privacy rule:** never commit or paste a real credential, hostname, location, waypoint, screenshot, or device identifier into this repository
 
-This procedure configures OwnTracks as an HTTP client of Hermóðr. Screen names can move between OwnTracks releases; open the app's information (`i`) screen and use the corresponding Connection, Identification, and Advanced settings when a label differs.
+This procedure configures OwnTracks as an HTTP client of Hermóðr. The field order below was verified with OwnTracks iOS 26.2.2; screen names can move between releases. Every all-caps value is a placeholder, including `APPROVED_HOST`; never enter a placeholder literally.
 
 ## Values the operator supplies
 
@@ -31,13 +31,13 @@ These settings intentionally allow sensitive background location collection. Sto
 ## 2. Configure the HTTP connection
 
 1. In OwnTracks, tap the information (`i`) control and open **Settings**.
-2. Set **Connection Mode** to **HTTP**.
-3. Set **URL** to exactly `https://APPROVED_HOST/v1/owntracks`. Do not add a trailing slash, query string, username, or password.
-4. Enable authentication. Under **Identification**, enter `KEY_ID` as the username and enter the supplied protected credential as the password.
-5. Set the device name/ID to `DEVICE_NAME` and the tracker ID to the exact registered two-character value `TT`.
-6. Leave invalid-certificate acceptance off. The route must validate with the iPhone's normal TLS trust. Do not use plain HTTP.
-7. Leave OwnTracks payload encryption unset/off. Hermóðr terminates TLS but does not implement OwnTracks payload decryption.
-8. Do not add custom HTTP headers, URL configuration, remote commands, friends, or sharing for version 1.
+2. Set **TrackerID** to the exact registered two-character `TT`. Replace the generated **DeviceID** UUID with the assigned stable generic `DEVICE_NAME`.
+3. Leave MQTT-only **Host** and **Port** unchanged, **Websockets** off, and **Proto** at `4`.
+4. Leave **TLS** on. Set **UserID** to `KEY_ID`, turn **Authentication** on, and enter the protected credential as **Password**.
+5. Leave **Secret Encryption Key** blank. Hermóðr terminates TLS but does not implement OwnTracks payload encryption.
+6. Set **URL** to exactly `https://APPROVED_HOST/v1/owntracks`. Do not add a trailing slash, query string, username, or password. This URL configures HTTP delivery; the MQTT Host and Port are not the Hermóðr endpoint.
+7. Leave **Expert Mode** fields unchanged. Do not add custom headers, remote commands, friends, or sharing for version 1.
+8. The `https://` URL must validate through the iPhone's normal TLS trust. Never enable invalid-certificate acceptance or use plain HTTP.
 
 OwnTracks HTTP mode POSTs its JSON messages to the configured URL, supports Basic authentication, treats a `2xx` response as delivered, and queues a message when the endpoint is unreachable. The expected Hermóðr success response is `200` with `[]` ([OwnTracks HTTP](https://owntracks.org/booklet/tech/http/)). The tracker ID is required for HTTP location messages, and the device status reports whether background refresh is available ([OwnTracks JSON](https://owntracks.org/booklet/tech/json/)).
 
@@ -46,10 +46,9 @@ Manual entry is deliberate. OwnTracks supports `.otrc` imports, but those files 
 ## 3. Make the first controlled publish
 
 1. Select **Manual** monitoring mode.
-2. Tap the manual publish control once while the app is in the foreground.
-3. Confirm that OwnTracks shows a successful connection and no queued message.
-4. Tell the operator the publish time, but do not send coordinates or a screenshot.
-5. The operator confirms one accepted event, processing convergence, current aggregate freshness, no pending quarantine, and no sensitive fields in logs.
+2. Select **Publish location now** once while the app is in the foreground.
+3. Tell the operator the publish time and any visible error or queue state, but do not send coordinates or a screenshot. OwnTracks may show no success banner or queue count; server-side receipt is authoritative.
+4. The operator confirms one accepted event, processing convergence, current aggregate freshness, no pending quarantine, and no sensitive fields in logs.
 
 Do not repeatedly publish while diagnosing a failure. Record only time, HTTP response class, message type, trigger, queue count, and bounded Hermóðr evidence IDs.
 
@@ -78,12 +77,20 @@ OwnTracks supports circular regions and publishes enter/leave transitions; its i
 ## 6. Test delayed delivery
 
 1. Note the current time and disconnect both Wi-Fi and cellular data without disabling Location Services.
-2. Trigger one manual publish. Confirm OwnTracks indicates that the message is queued.
+2. Select **Publish location now** once. Record its time and any visible state; OwnTracks may show neither an immediate error nor a queue count.
 3. Wait a recorded, bounded interval, restore connectivity, and leave OwnTracks running.
 4. Confirm the queued message clears and ask the operator to verify capture time precedes receipt time, processing converges, order is deterministic, and no duplicate canonical effects appear.
 5. Repeat only if the first result is ambiguous. OwnTracks retries foreground failures with increasing delays and may receive much less frequent background execution from iOS ([OwnTracks iOS](https://owntracks.org/booklet/features/ios/)).
 
-## 7. Finish credential cutover
+## 7. Send one device-status report
+
+1. With connectivity restored, use **Map > Info (`i`) > Status Info > Send Debug Status** once.
+2. Tell the operator only the send time and visible result. Do not paste the payload or take a screenshot: it has no coordinates but contains a vendor UUID plus device, OS, locale, permission, and capability metadata.
+3. The operator confirms a `200`, a timestamp-less `_type=status` shape, processing convergence, and no leakage into general logs or metrics. OwnTracks iOS 26.2.2 omits `tst` from this report; Hermóðr preserves null raw capture time and uses receipt time only as a labelled normalization fallback.
+
+A permanent `4xx` discards this status object. Stop after one failure; repair and deploy the server contract, then explicitly send a fresh status report.
+
+## 8. Finish credential cutover
 
 Once the new credential has succeeded through TLS and all expected message types are accepted, the operator revokes the bootstrap credential with the audited `credential-revoke` command. The old credential must then receive a generic authentication failure while the iPhone continues to succeed. Never restore the old secret to troubleshoot a client setting.
 
@@ -92,10 +99,11 @@ Once the new credential has succeeded through TLS and all expected message types
 | Symptom | Safe check |
 | --- | --- |
 | TLS or certificate error | URL begins with `https://`; hostname is exact; invalid-certificate acceptance remains off; phone clock is correct |
-| `401` | Re-enter the opaque username and password; verify tracker ID exactly; do not send either value in chat or a screenshot |
+| `401` | Re-enter the opaque username and password; do not send either value in chat or a screenshot |
+| `400` for **Send Debug Status** | Stop; the operator checks timestamp-less status compatibility, deploys a repair, and requests one fresh report |
 | `413` | Remove unapproved extended data or batching; do not increase the gateway limit during commissioning |
 | `415` | Remove custom content-type/header settings |
-| `422` | Verify HTTP mode, tracker ID, supported OwnTracks message type, and phone clock |
+| `422` or identity mismatch | Verify the URL, tracker ID, supported OwnTracks message type, and phone clock |
 | `503` or timeout | Stop repeated publishing; operator checks readiness, storage, and gateway state; leave the queued message intact for the recovery test |
 | Foreground succeeds, background does not | Recheck **Always**, **Precise Location**, Background App Refresh, Low Power/Data modes, and whether OwnTracks was force-closed |
 | Duplicate display | Preserve the queued state and time evidence; the operator checks Hermóðr idempotency rather than deleting records |

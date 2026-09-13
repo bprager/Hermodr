@@ -255,6 +255,38 @@ class AuthenticationAndIngestionTests(ReceiverTestCase):
         finally:
             connection.close()
 
+    def test_ios_status_without_timestamp_preserves_absence_and_deduplicates_retry(self):
+        payload = {
+            "_type": "status",
+            "iOS": {"version": "26.2.2"},
+        }
+        first = self.service.ingest(self.request(payload))
+        retry = self.service.ingest(self.request(payload))
+
+        self.assertEqual((first.status, retry.status), (200, 200))
+        self.assertEqual(
+            dict(first.headers)["X-Hermodr-Ingest-ID"],
+            dict(retry.headers)["X-Hermodr-Ingest-ID"],
+        )
+        self.assertEqual(self.counts(), (1, 1, 0))
+        connection = connect(self.configuration)
+        try:
+            row = connection.execute(
+                "SELECT payload, received_at_ms, captured_at_ms, source_type, disposition FROM raw_events"
+            ).fetchone()
+            self.assertEqual(
+                tuple(row),
+                (
+                    b'{"_type":"status","iOS":{"version":"26.2.2"}}',
+                    NOW_SECONDS * 1000,
+                    None,
+                    "status",
+                    "accepted",
+                ),
+            )
+        finally:
+            connection.close()
+
     def test_commit_failure_is_not_acknowledged_and_rolls_back(self):
         self.service.before_commit = lambda: (_ for _ in ()).throw(sqlite3.OperationalError("SENSITIVE_CANARY"))
         response = self.service.ingest(self.request())
@@ -292,9 +324,12 @@ class ValidationTests(ReceiverTestCase):
         requests = [self.request(body=item) for item in malformed]
         requests.extend((
             self.request([]), self.request({"_type": "unknown", "tst": NOW_SECONDS}),
-            self.request({"_type": "status"}), self.request({"_type": "status", "tst": True}),
+            self.request({"_type": "status", "tst": True}),
             self.request({"_type": "status", "tst": -1}),
             self.request({"_type": "status", "tst": 9_223_372_036_854_776}),
+            self.request({"_type": "location", "lat": 0.0, "lon": 0.0}),
+            self.request({"_type": "transition", "lat": 0.0, "lon": 0.0}),
+            self.request({"_type": "waypoint", "lat": 0.0, "lon": 0.0}),
             self.request(self.payload(lat=True)), self.request(self.payload(lon=False)),
             self.request(self.payload(lat=91)), self.request(self.payload(lon=-181)),
             self.request({"_type": "transition", "tst": NOW_SECONDS, "lat": 0}),
@@ -311,6 +346,7 @@ class ValidationTests(ReceiverTestCase):
             {"_type": "transition", "tst": NOW_SECONDS, "lat": 0.0, "lon": 0.0},
             {"_type": "waypoint", "tst": NOW_SECONDS, "lat": 0.0, "lon": 0.0},
             {"_type": "status", "tst": NOW_SECONDS},
+            {"_type": "status", "iOS": {"version": "26.2.2"}},
         ):
             self.assertEqual(parse_payload(json.dumps(value).encode())["_type"], value["_type"])
         self.assertEqual(user_agent_family(None), "unknown")

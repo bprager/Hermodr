@@ -61,7 +61,11 @@ class ProcessingTestCase(unittest.TestCase):
                 subject_id=subject, device_id=device_id, ingest_id=ingest_id,
                 idempotency_key=f"{suffix:0>64}", source_digest=source_digest(payload),
                 payload=encoded, received_at_ms=received_at_ms,
-                captured_at_ms=int(payload["tst"]) * 1000,
+                captured_at_ms=(
+                    int(payload["tst"]) * 1000
+                    if "tst" in payload
+                    else None
+                ),
                 source_type=str(payload["_type"]),
             )
             job_id = f"job_{suffix:0>20}"
@@ -114,6 +118,28 @@ class ClaimTests(ProcessingTestCase):
 
 
 class NormalizationTests(ProcessingTestCase):
+    def test_status_without_device_timestamp_normalizes_at_receipt_time(self):
+        payload = {"_type": "status", "iOS": {"version": "26.2.2"}}
+        job_id = self.queue("89", payload, received_at_ms=123_456)
+
+        result = process_one(self.configuration, "worker", 123_500)
+
+        self.assertEqual((result.job_id, result.state), (job_id, "processed"))
+        connection = connect(self.configuration)
+        try:
+            row = connection.execute(
+                """SELECT captured_at_ms, received_at_ms, source_type, canonical_json
+                   FROM normalized_events"""
+            ).fetchone()
+            self.assertEqual(tuple(row[:3]), (123_456, 123_456, "status"))
+            normalized = json.loads(row[3])
+            self.assertEqual(normalized["captured_at"], normalized["received_at"])
+            self.assertEqual(normalized["captured_at_source"], "receipt_fallback")
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM observations").fetchone()[0], 0)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM outbox_records").fetchone()[0], 0)
+        finally:
+            connection.close()
+
     def test_source_transition_and_waypoint_are_uncertain(self):
         self.queue(
             "90", {"_type": "transition", "tst": 100, "lat": 0.0, "lon": 0.0,
@@ -223,6 +249,24 @@ class NormalizationTests(ProcessingTestCase):
         connection = connect(self.configuration)
         try:
             row = connection.execute("SELECT state, error_code FROM processing_jobs WHERE job_id=?", (permanent_job,)).fetchone()
+            self.assertEqual(tuple(row), ("failed", "source_contract_invalid"))
+        finally:
+            connection.close()
+
+        invalid_time_job = self.queue(
+            "31", {"_type": "location", "tst": 100, "lat": 0.0, "lon": 0.0},
+            received_at_ms=100_000,
+        )
+        connection = connect(self.configuration)
+        connection.execute("UPDATE raw_events SET captured_at_ms = NULL WHERE ingest_id LIKE 'ing_%31'")
+        connection.commit()
+        connection.close()
+        self.assertEqual(process_one(self.configuration, "worker", 100_000).state, "failed")
+        connection = connect(self.configuration)
+        try:
+            row = connection.execute(
+                "SELECT state, error_code FROM processing_jobs WHERE job_id=?", (invalid_time_job,),
+            ).fetchone()
             self.assertEqual(tuple(row), ("failed", "source_contract_invalid"))
         finally:
             connection.close()

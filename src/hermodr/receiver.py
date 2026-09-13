@@ -192,7 +192,9 @@ def parse_payload(body: bytes) -> dict[str, object]:
     if source_type not in SUPPORTED_TYPES:
         raise RequestFailure(422, ErrorCode.UNSUPPORTED_MESSAGE_TYPE.value)
     timestamp = value.get("tst")
-    if isinstance(timestamp, bool) or not isinstance(timestamp, int) or not 0 <= timestamp <= 9_223_372_036_854_775:
+    if "tst" not in value and source_type == "status":
+        timestamp = None
+    elif isinstance(timestamp, bool) or not isinstance(timestamp, int) or not 0 <= timestamp <= 9_223_372_036_854_775:
         raise RequestFailure(400, ErrorCode.CONTRACT_INVALID.value)
     if source_type in {"location", "transition", "waypoint"}:
         latitude = value.get("lat")
@@ -288,7 +290,17 @@ class ReceiverService:
                     raise RequestFailure(400, ErrorCode.IDENTITY_MISMATCH.value)
                 canonical = canonical_json(payload)
                 ingest_id = sortable_id("ing", now)
-                disposition = "quarantined" if int(payload["tst"]) * 1000 > now_ms + self.configuration.max_future_seconds * 1000 else "accepted"
+                captured_at_ms = (
+                    int(payload["tst"]) * 1000
+                    if "tst" in payload
+                    else None
+                )
+                disposition = (
+                    "quarantined"
+                    if captured_at_ms is not None
+                    and captured_at_ms > now_ms + self.configuration.max_future_seconds * 1000
+                    else "accepted"
+                )
                 storage_started = time.monotonic()
                 persisted = repository.persist_ingest(
                     subject_id=authentication.credential.subject_id,
@@ -303,7 +315,7 @@ class ReceiverService:
                     source_digest=source_digest(payload),
                     payload=canonical,
                     received_at_ms=now_ms,
-                    captured_at_ms=int(payload["tst"]) * 1000,
+                    captured_at_ms=captured_at_ms,
                     source_type=source_type,
                     disposition=disposition,
                     request_id=request_id,
