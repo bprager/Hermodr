@@ -47,6 +47,8 @@ OwnTracks iOS 26.2.2 **Send Debug Status** exposed a synthetic-contract defect: 
 
 After the real-device events, the commissioning preflight remained ready with database and audit integrity valid, no blocking work or quarantine, and all 64 durable jobs processed. A fresh encrypted backup was created, copied to the approved off-host destination, verified, and restored in isolation successfully.
 
+The physical iPhone was then enrolled behind the generic internal identifier `dev_iphone_v1` and a new protected `iphone_v1` credential was staged through the audited command boundary. A foreground publish at 2026-09-13 04:46:26 UTC succeeded with the new credential. During bounded overlap the bootstrap credential also returned `200`; it was then revoked through the audited control and returned the expected generic `401`. Its placeholder device was disabled and its protected secret removed. A second iPhone publish at 2026-09-13 05:09:15 UTC succeeded after revocation and processed on the first attempt. OwnTracks was returned to the owner-selected Significant mode. The post-cutover preflight reported one active subject, one active configured device, one usable protected credential, valid database and fifteen-entry audit chains, no blocking work or quarantine, and successful fresh backup create, verify, and isolated restore-test stages.
+
 ## Recovery evidence
 
 On 2026-09-12 the identity retrieved from Bitwarden exactly matched the protected staging identity, decrypted the committed SOPS artifact, and restore-tested a Saga archive. The staging identity, retrieved identity, and temporary plaintext passphrase were securely removed from Odin after success.

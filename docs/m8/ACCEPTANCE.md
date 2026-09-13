@@ -30,8 +30,8 @@ Use UTC timestamps and bounded audit/run IDs only.
 | Region transition | One enter and one leave for owner-selected temporary region | Complete; temporary region removed |
 | Device status | Background refresh status observed; headers/payload shape recorded without values | Complete after `a9abb6342216`; timestamp-less status accepted and processed, field names only inspected |
 | Connectivity loss | One queued publish drains after connectivity restoration without duplicate canonical effects | Partial; natural 25-minute delayed delivery and controlled reconnect/idempotency pass, controlled capture-before-receipt interval not proven |
-| Credential cutover | New credential succeeds; audited bootstrap revocation; old credential fails | Pending iPhone |
-| Processing/outbox | Jobs and recompute converge; approved projection is idempotent | Real-device jobs converged and reconnect window had zero duplicate raw/canonical effects; final cutover check pending |
+| Credential cutover | New credential succeeds; audited bootstrap revocation; old credential fails | Complete 2026-09-12; new iPhone credential accepted before and after cutover, bootstrap revoked through audited control, old login returned `401`, placeholder device disabled, and old secret removed |
+| Processing/outbox | Jobs and recompute converge; approved projection is idempotent | Complete; real-device jobs converged, reconnect window had zero duplicate raw/canonical effects, and the post-cutover publish processed on its first attempt |
 | Observability | Dashboard current; alert test delivered; logs pass redaction inspection | Dashboard/rules/metrics current; real-event inspection pending |
 | Recovery | Fresh encrypted Saga archive verifies and restores in isolation | Complete 2026-09-12 after real-device events; create, off-host verify, and isolated restore succeeded |
 | Rollback | Client Quiet/removal and server endpoint shutdown procedures rehearsed | Pending iPhone |
@@ -43,7 +43,7 @@ These decisions cannot be inferred or automated:
 
 | Decision | Approved value/result | Approval reference |
 | --- | --- | --- |
-| Normal monitoring mode | Pending | Pending |
+| Normal monitoring mode | Significant | Interactive commissioning, 2026-09-12 |
 | Battery impact | Pending | Pending |
 | Event frequency | Pending | Pending |
 | Retained known-place regions | Pending | Pending |
